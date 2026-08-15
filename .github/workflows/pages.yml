@@ -1,0 +1,54 @@
+# Publishes the static site in web/ to GitHub Pages.
+#
+# Branch-based publishing can only serve the repository root or /docs, and the
+# site lives in web/, so deployment goes through Actions instead. The workflow
+# uploads that one directory as the Pages artifact, which leaves the repository
+# layout unchanged and keeps the 2.5 GB dataset and the model checkpoints out
+# of the published site.
+#
+# No build step runs. The page is a single HTML file with inline CSS and
+# JavaScript, and it reads its numbers from the JSON and image assets beside
+# it, so the directory is served exactly as committed.
+
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. In-progress runs are allowed to finish so a
+# published site is never left half-replaced.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site directory
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
