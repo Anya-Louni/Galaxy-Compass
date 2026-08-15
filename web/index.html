@@ -81,12 +81,8 @@ strong,b{font-weight:700; color:#fff}
   margin-top:1.15rem; font-size:clamp(1.02rem,1.7vw,1.28rem); color:var(--ink-2);
   max-width:52ch; text-wrap:balance;
 }
-#hero .author{
-  margin-top:1.5rem; font:400 1.02rem/1.5 var(--serif); color:var(--ink-2);
-  letter-spacing:.005em;
-}
 #hero .dateline{
-  margin-top:.5rem; font:500 12.5px/1.6 var(--sans); letter-spacing:.06em;
+  margin-top:1.7rem; font:500 12.5px/1.6 var(--sans); letter-spacing:.06em;
   color:var(--ink-3);
 }
 #hero .hairline{width:74px; height:1px; margin:1.7rem auto 0;
@@ -204,24 +200,26 @@ select.pill{background:rgba(6,9,16,.86); color:var(--ink-2);
 #inspect .row b{color:var(--ink-2); font-weight:500}
 
 /* --------------------------------------------------------------- rotation */
-.rotgrid{display:grid; grid-template-columns:236px 1fr; gap:30px; align-items:start}
+.rotgrid{display:grid; grid-template-columns:236px minmax(280px,330px) 1fr;
+  gap:30px; align-items:start}
 #rotCanvas{width:236px; height:236px; display:block; border-radius:3px;
   border:1px solid var(--rule); background:#04060b}
-.barblock+.barblock{margin-top:20px}
-.barblock h3{display:flex; align-items:center; gap:10px; margin-bottom:11px;
-  font:600 14px/1 var(--sans)}
-.dot{width:9px; height:9px; border-radius:2px; flex:0 0 auto}
-.tag{margin-left:auto; font:500 11px/1.6 var(--mono); color:var(--ink-3);
+#polar{width:100%; max-width:330px; aspect-ratio:1; display:block}
+.tag{font:500 11px/1.6 var(--mono); color:var(--ink-3);
   border:1px solid var(--rule); border-radius:2px; padding:1px 7px}
-.bar{display:grid; grid-template-columns:158px 1fr 44px; gap:10px;
-  align-items:center; margin-bottom:4px; font:400 12px/1.5 var(--sans);
-  color:var(--ink-3)}
-.bar .track{height:8px; background:var(--rise); border-radius:1px; overflow:hidden}
-/* Scaled rather than resized: these bars update every 90 ms, and animating
-   width would relayout the row on each frame. */
-.bar .fill{height:100%; width:100%; transform:scaleX(0);
+/* Only classes that carry probability somewhere on the orbit are listed.
+   A fixed row per class would leave most of the panel reading 0.00. */
+.rrow{display:grid; grid-template-columns:1fr auto; gap:4px 12px;
+  align-items:baseline; margin-bottom:11px}
+.rrow .nm{font:500 13px/1.4 var(--sans); color:var(--ink-2)}
+.rrow .vv{font:400 11.5px/1.4 var(--mono); color:var(--ink-3);
+  font-variant-numeric:tabular-nums}
+.rrow .tracks{grid-column:1 / -1; display:flex; flex-direction:column; gap:3px}
+.rrow .tr{height:7px; background:var(--rise); border-radius:1px; overflow:hidden}
+/* Scaled rather than resized: these update every 90 ms, and animating width
+   would relayout the row on each frame. */
+.rrow .fl{height:100%; width:100%; transform:scaleX(0);
   transform-origin:left center; transition:transform .09s linear}
-.bar .val{text-align:right; font:400 11px/1 var(--mono); color:var(--ink-2)}
 
 /* ------------------------------------------------------------ interpolate */
 .interpgrid{display:grid; grid-template-columns:1fr 1fr; gap:30px; align-items:start}
@@ -301,10 +299,8 @@ footer{border-top:1px solid var(--rule); padding:44px 0 72px;
     <h1>Galaxies Without a Compass</h1>
     <p class="sub">Learning Under Rotational Symmetry</p>
     <div class="hairline"></div>
-    <div class="author">Anya Louni</div>
     <div class="dateline" id="dateline"></div>
   </div>
-  <div class="cue">Scroll</div>
 </section>
 
 <main>
@@ -473,30 +469,34 @@ footer{border-top:1px solid var(--rule); padding:44px 0 72px;
   <div class="shell">
     <div class="hdr"><span class="n">5</span><h2>Invariance under rotation</h2></div>
     <p>Both networks below were trained on the full label set with identical full-circle
-    rotation augmentation. The galaxy turns through a complete revolution; the bars report
-    each model's class probabilities at that orientation.</p>
+    rotation augmentation. The galaxy turns through a complete revolution, and the polar
+    trace records the probability each model assigns to the Galaxy Zoo class at every
+    orientation. Rotation angle is the angular axis, so a model whose answer is independent
+    of orientation draws a circle.</p>
   </div>
   <div class="wide">
     <div class="rotgrid reveal" style="margin-top:30px">
       <div>
         <canvas id="rotCanvas" width="260" height="260"></canvas>
-        <p class="note" id="rotMeta" style="margin:13px 0 0"></p>
-        <div class="seg" style="margin-top:13px; display:inline-flex">
-          <button id="rotPrev" aria-label="Previous galaxy">&larr;</button>
-          <button id="rotPlay" aria-pressed="true">Pause</button>
-          <button id="rotNext" aria-label="Next galaxy">&rarr;</button>
+        <div class="legend" style="margin-top:14px; flex-direction:column; gap:7px">
+          <div class="item"><span class="sw" style="background:var(--s1)"></span>
+            C8-steerable <span class="tag" id="eqSwing"></span></div>
+          <div class="item"><span class="sw" style="background:var(--s2)"></span>
+            Dense CNN <span class="tag" id="blSwing"></span></div>
         </div>
       </div>
       <div>
-        <div class="barblock">
-          <h3><span class="dot" style="background:var(--s1)"></span>C8-steerable
-            <span class="tag" id="eqSwing"></span></h3>
-          <div id="eqBars"></div>
-        </div>
-        <div class="barblock">
-          <h3><span class="dot" style="background:var(--s2)"></span>Dense CNN
-            <span class="tag" id="blSwing"></span></h3>
-          <div id="blBars"></div>
+        <canvas id="polar" width="620" height="620" role="img"
+          aria-label="Probability of the labelled class plotted against rotation angle"></canvas>
+      </div>
+      <div>
+        <h3 style="margin-bottom:12px">At this orientation</h3>
+        <div id="readout"></div>
+        <p class="note" id="rotMeta" style="margin:16px 0 0"></p>
+        <div class="seg" style="margin-top:14px; display:inline-flex">
+          <button id="rotPrev" aria-label="Previous galaxy">&larr;</button>
+          <button id="rotPlay" aria-pressed="true">Pause</button>
+          <button id="rotNext" aria-label="Next galaxy">&rarr;</button>
         </div>
       </div>
     </div>
@@ -1020,22 +1020,123 @@ function buildCurve(sweep){
 function setupRotation(demo, sheet){
   if (!demo){ document.getElementById('invariance').style.display = 'none'; return; }
   const cv = document.getElementById('rotCanvas'), ctx = cv.getContext('2d');
+  const pc = document.getElementById('polar'), pctx = pc.getContext('2d');
+  const readout = document.getElementById('readout');
   const names = demo.class_names, N = demo.n_angles, FS_ = demo.frame_size;
-  let gi = 0, ang = 0, playing = true;
+  let gi = 0, ang = 0, playing = true, rows = [];
 
-  const mkBars = host => {
-    host.innerHTML = '';
-    return names.map(n => {
+  /* Classes that stay near zero at every orientation carry no information
+     and are omitted, so the panel lists what is happening rather than a
+     column of 0.00. */
+  function activeClasses(g){
+    const peak = new Array(names.length).fill(0);
+    for (let a = 0; a < N; a++)
+      for (let c = 0; c < names.length; c++){
+        peak[c] = Math.max(peak[c], demo.equivariant[g][a][c], demo.baseline[g][a][c]);
+      }
+    const ranked = peak.map((v, c) => [v, c]).sort((a, b) => b[0] - a[0]);
+    // Everything above the threshold, and never fewer than three, so a
+    // confident prediction still shows what the runners-up were.
+    const n = Math.max(3, ranked.filter(d => d[0] >= 0.01).length);
+    return ranked.slice(0, n).map(d => d[1]);
+  }
+
+  function buildReadout(g){
+    const act = activeClasses(g);
+    readout.innerHTML = '';
+    rows = act.map(c => {
       const row = document.createElement('div');
-      row.className = 'bar';
-      row.innerHTML = `<span>${n}</span><span class="track"><span class="fill"></span></span>`
-        + `<span class="val">0.00</span>`;
-      host.appendChild(row);
-      return {fill: row.querySelector('.fill'), val: row.querySelector('.val')};
+      row.className = 'rrow';
+      row.innerHTML =
+        `<span class="nm">${names[c]}</span><span class="vv"></span>`
+        + `<span class="tracks">`
+        + `<span class="tr"><span class="fl" style="background:${S1}"></span></span>`
+        + `<span class="tr"><span class="fl" style="background:${S2}"></span></span>`
+        + `</span>`;
+      readout.appendChild(row);
+      const fl = row.querySelectorAll('.fl');
+      return {c, eq: fl[0], bl: fl[1], vv: row.querySelector('.vv')};
     });
-  };
-  const eqB = mkBars(document.getElementById('eqBars'));
-  const blB = mkBars(document.getElementById('blBars'));
+    const omitted = names.length - act.length;
+    if (omitted > 0){
+      const p = document.createElement('p');
+      p.className = 'note';
+      p.style.cssText = 'margin:0; font-size:.8rem';
+      p.textContent = omitted + ' further classes stay below 0.01 at every '
+        + 'orientation and are omitted.';
+      readout.appendChild(p);
+    }
+  }
+
+  /* Rotation angle is the natural axis for this measurement, so it becomes
+     the angular axis of the plot. Radius is the probability assigned to the
+     labelled class. A model invariant to rotation traces a circle. */
+  function drawPolar(){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const size = pc.clientWidth || 320;
+    if (pc.width !== Math.round(size * dpr)){
+      pc.width = pc.height = Math.round(size * dpr);
+    }
+    pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    pctx.clearRect(0, 0, size, size);
+    const cx = size / 2, cy = size / 2, R = size * 0.40;
+    const lab = demo.galaxies[gi].label;
+    const P = a => 2 * Math.PI * a / N - Math.PI / 2;
+
+    pctx.lineWidth = 1;
+    [0.25, 0.5, 0.75, 1].forEach(f => {
+      pctx.beginPath(); pctx.strokeStyle = f === 1 ? CSS('--rule-2') : CSS('--rule');
+      pctx.arc(cx, cy, R * f, 0, 2 * Math.PI); pctx.stroke();
+    });
+    for (let d = 0; d < 360; d += 45){
+      const t = d * Math.PI / 180 - Math.PI / 2;
+      const exact = d % 90 === 0;
+      pctx.beginPath();
+      pctx.strokeStyle = exact ? CSS('--rule-2') : CSS('--rule');
+      pctx.moveTo(cx + Math.cos(t) * R * (exact ? 0 : 0.86), cy + Math.sin(t) * R * (exact ? 0 : 0.86));
+      pctx.lineTo(cx + Math.cos(t) * R, cy + Math.sin(t) * R);
+      pctx.stroke();
+      if (exact){
+        pctx.fillStyle = CSS('--ink-3');
+        pctx.font = '11px ' + CSS('--sans');
+        pctx.textAlign = 'center'; pctx.textBaseline = 'middle';
+        pctx.fillText(d + '\u00b0', cx + Math.cos(t) * (R + 17), cy + Math.sin(t) * (R + 17));
+      }
+    }
+
+    const trace = (probs, color, width) => {
+      pctx.beginPath();
+      for (let a = 0; a <= N; a++){
+        const i = a % N, r = probs[gi][i][lab] * R, t = P(i);
+        const x = cx + Math.cos(t) * r, y = cy + Math.sin(t) * r;
+        a ? pctx.lineTo(x, y) : pctx.moveTo(x, y);
+      }
+      pctx.closePath();
+      pctx.strokeStyle = color; pctx.lineWidth = width;
+      pctx.lineJoin = 'round'; pctx.stroke();
+      pctx.fillStyle = color + '22'; pctx.fill();
+    };
+    trace(demo.baseline, S2, 2);
+    trace(demo.equivariant, S1, 2);
+
+    const t = P(ang);
+    pctx.beginPath(); pctx.strokeStyle = 'rgba(255,255,255,.30)'; pctx.lineWidth = 1;
+    pctx.moveTo(cx, cy); pctx.lineTo(cx + Math.cos(t) * R, cy + Math.sin(t) * R);
+    pctx.stroke();
+    [[demo.equivariant, S1], [demo.baseline, S2]].forEach(([p, col]) => {
+      const r = p[gi][ang][lab] * R;
+      pctx.beginPath(); pctx.fillStyle = col;
+      pctx.arc(cx + Math.cos(t) * r, cy + Math.sin(t) * r, 4, 0, 2 * Math.PI);
+      pctx.fill();
+      pctx.strokeStyle = CSS('--void'); pctx.lineWidth = 2; pctx.stroke();
+    });
+
+    pctx.fillStyle = CSS('--ink-3');
+    pctx.font = '10px ' + CSS('--mono');
+    pctx.textAlign = 'left'; pctx.textBaseline = 'middle';
+    pctx.fillText('1.0', cx + 5, cy - R + 8);
+    pctx.fillText('0', cx + 5, cy - 3);
+  }
 
   function paint(){
     const g = demo.galaxies[gi];
@@ -1043,18 +1144,18 @@ function setupRotation(demo, sheet){
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(sheet, ang*FS_, gi*FS_, FS_, FS_, 0, 0, cv.width, cv.height);
     const pe = demo.equivariant[gi][ang], pb = demo.baseline[gi][ang];
-    for (let i = 0; i < names.length; i++){
-      eqB[i].fill.style.transform = 'scaleX(' + pe[i].toFixed(4) + ')';
-      eqB[i].fill.style.background = S1;
-      eqB[i].val.textContent = pe[i].toFixed(2);
-      blB[i].fill.style.transform = 'scaleX(' + pb[i].toFixed(4) + ')';
-      blB[i].fill.style.background = S2;
-      blB[i].val.textContent = pb[i].toFixed(2);
-    }
+    rows.forEach(r => {
+      r.eq.style.transform = 'scaleX(' + pe[r.c].toFixed(4) + ')';
+      r.bl.style.transform = 'scaleX(' + pb[r.c].toFixed(4) + ')';
+      r.vv.textContent = pe[r.c].toFixed(3) + '  /  ' + pb[r.c].toFixed(3);
+    });
+    drawPolar();
     set('rotMeta', `Galaxy Zoo label <b style="color:var(--ink-2)">${g.class_name}</b><br>`
       + `<span class="num">${(ang*360/N).toFixed(0)}${'\u00b0'} ${DOT} `
-      + `RA ${g.ra.toFixed(4)} ${DOT} Dec ${g.dec.toFixed(4)}</span>`);
+      + `RA ${g.ra.toFixed(4)} ${DOT} Dec ${g.dec.toFixed(4)}</span><br>`
+      + `<span class="num" style="font-size:.78rem">steerable / dense</span>`);
   }
+  buildReadout(gi);
   let last = 0;
   (function loop(t){
     if (playing && t - last > 90){ ang = (ang+1) % N; last = t; paint(); }
@@ -1065,10 +1166,13 @@ function setupRotation(demo, sheet){
     playing = !playing; e.target.textContent = playing ? 'Pause' : 'Play';
     e.target.setAttribute('aria-pressed', playing);
   };
-  document.getElementById('rotPrev').onclick = () => {
-    gi = (gi - 1 + demo.galaxies.length) % demo.galaxies.length; paint(); };
-  document.getElementById('rotNext').onclick = () => {
-    gi = (gi + 1) % demo.galaxies.length; paint(); };
+  const goto = d => {
+    gi = (gi + d + demo.galaxies.length) % demo.galaxies.length;
+    buildReadout(gi); paint();
+  };
+  document.getElementById('rotPrev').onclick = () => goto(-1);
+  document.getElementById('rotNext').onclick = () => goto(1);
+  addEventListener('resize', () => drawPolar());
 
   const st = demo.stability || {};
   const eE = st.equivariant ? st.equivariant.tv_exact_grid_rotations : 0;
