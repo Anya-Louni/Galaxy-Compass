@@ -1,0 +1,438 @@
+{
+  "per_checkpoint": [
+    {
+      "checkpoint": "baseline_dense_f0.05_s0",
+      "architecture": "baseline",
+      "label_fraction": 0.05,
+      "accuracy_per_rotation": [
+        0.6136939983093829,
+        0.612566920259228,
+        0.6100309946463792,
+        0.6083403775711468
+      ],
+      "mean": 0.6111580726965342,
+      "spread": 0.005353620738236087,
+      "std": 0.002099135591117406
+    },
+    {
+      "checkpoint": "baseline_dense_f0.05_s1",
+      "architecture": "baseline",
+      "label_fraction": 0.05,
+      "accuracy_per_rotation": [
+        0.6176387714849253,
+        0.6162299239222316,
+        0.6176387714849253,
+        0.612566920259228
+      ],
+      "mean": 0.6160185967878276,
+      "spread": 0.00507185122569731,
+      "std": 0.002074166224899304
+    },
+    {
+      "checkpoint": "baseline_dense_f0.05_s2",
+      "architecture": "baseline",
+      "label_fraction": 0.05,
+      "accuracy_per_rotation": [
+        0.6785009861932939,
+        0.6877993801070724,
+        0.6858269935193012,
+        0.6824457593688363
+      ],
+      "mean": 0.6836432797971259,
+      "spread": 0.009298393913778513,
+      "std": 0.003532669461290447
+    },
+    {
+      "checkpoint": "baseline_dense_f0.1_s0",
+      "architecture": "baseline",
+      "label_fraction": 0.1,
+      "accuracy_per_rotation": [
+        0.7052690898844745,
+        0.7032967032967034,
+        0.705832628909552,
+        0.7063961679346294
+      ],
+      "mean": 0.7051986475063399,
+      "spread": 0.003099464637926097,
+      "std": 0.0011681546880654143
+    },
+    {
+      "checkpoint": "baseline_dense_f0.1_s1",
+      "architecture": "baseline",
+      "label_fraction": 0.1,
+      "accuracy_per_rotation": [
+        0.7142857142857143,
+        0.7159763313609467,
+        0.7117497886728656,
+        0.7148492533107917
+      ],
+      "mean": 0.7142152719075796,
+      "spread": 0.004226542688081092,
+      "std": 0.0015481305280244826
+    },
+    {
+      "checkpoint": "baseline_dense_f0.1_s2",
+      "architecture": "baseline",
+      "label_fraction": 0.1,
+      "accuracy_per_rotation": [
+        0.7458438996900535,
+        0.7444350521273598,
+        0.7371090448013525,
+        0.7362637362637363
+      ],
+      "mean": 0.7409129332206256,
+      "spread": 0.009580163426317179,
+      "std": 0.004266273296626263
+    },
+    {
+      "checkpoint": "baseline_dense_f0.2_s0",
+      "architecture": "baseline",
+      "label_fraction": 0.2,
+      "accuracy_per_rotation": [
+        0.7534516765285996,
+        0.7537334460411383,
+        0.7548605240912933,
+        0.756269371653987
+      ],
+      "mean": 0.7545787545787546,
+      "spread": 0.0028176951253874316,
+      "std": 0.0011093276801932637
+    },
+    {
+      "checkpoint": "baseline_dense_f0.2_s1",
+      "architecture": "baseline",
+      "label_fraction": 0.2,
+      "accuracy_per_rotation": [
+        0.7503522118906735,
+        0.7593688362919132,
+        0.7599323753169906,
+        0.757396449704142
+      ],
+      "mean": 0.7567624683009299,
+      "spread": 0.009580163426317179,
+      "std": 0.003818860571549646
+    },
+    {
+      "checkpoint": "baseline_dense_f0.2_s2",
+      "architecture": "baseline",
+      "label_fraction": 0.2,
+      "accuracy_per_rotation": [
+        0.7641589180050719,
+        0.7681036911806143,
+        0.7658495350803043,
+        0.7647224570301493
+      ],
+      "mean": 0.7657086503240349,
+      "spread": 0.0039447731755424265,
+      "std": 0.001510820695232983
+    },
+    {
+      "checkpoint": "baseline_dense_f0.5_s0",
+      "architecture": "baseline",
+      "label_fraction": 0.5,
+      "accuracy_per_rotation": [
+        0.7740208509439279,
+        0.7664130741053818,
+        0.7731755424063116,
+        0.7692307692307693
+      ],
+      "mean": 0.7707100591715976,
+      "spread": 0.0076077768385460764,
+      "std": 0.0030697039404763045
+    },
+    {
+      "checkpoint": "baseline_dense_f0.5_s1",
+      "architecture": "baseline",
+      "label_fraction": 0.5,
+      "accuracy_per_rotation": [
+        0.7664130741053818,
+        0.7655677655677655,
+        0.7697943082558467,
+        0.7666948436179205
+      ],
+      "mean": 0.7671174978867287,
+      "spread": 0.004226542688081203,
+      "std": 0.0016001432363483541
+    },
+    {
+      "checkpoint": "baseline_dense_f0.5_s2",
+      "architecture": "baseline",
+      "label_fraction": 0.5,
+      "accuracy_per_rotation": [
+        0.7785291631445478,
+        0.7796562411947028,
+        0.7807833192448577,
+        0.7757114680191604
+      ],
+      "mean": 0.7786700479008171,
+      "spread": 0.00507185122569731,
+      "std": 0.0018849095745646003
+    },
+    {
+      "checkpoint": "baseline_dense_f1_s0",
+      "architecture": "baseline",
+      "label_fraction": 1.0,
+      "accuracy_per_rotation": [
+        0.7790927021696252,
+        0.7743026204564666,
+        0.7737390814313891,
+        0.7737390814313891
+      ],
+      "mean": 0.7752183713722175,
+      "spread": 0.005353620738236087,
+      "std": 0.0022486460551581137
+    },
+    {
+      "checkpoint": "baseline_dense_f1_s1",
+      "architecture": "baseline",
+      "label_fraction": 1.0,
+      "accuracy_per_rotation": [
+        0.7720484643561567,
+        0.7774020850943928,
+        0.7731755424063116,
+        0.7816286277824739
+      ],
+      "mean": 0.7760636799098338,
+      "spread": 0.009580163426317179,
+      "std": 0.0037823031159928784
+    },
+    {
+      "checkpoint": "baseline_dense_f1_s2",
+      "architecture": "baseline",
+      "label_fraction": 1.0,
+      "accuracy_per_rotation": [
+        0.7723302338686954,
+        0.7731755424063116,
+        0.7731755424063116,
+        0.7709213863060017
+      ],
+      "mean": 0.7724006762468301,
+      "spread": 0.0022541561003098787,
+      "std": 0.0009211536228952967
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.05_s0",
+      "architecture": "equivariant",
+      "label_fraction": 0.05,
+      "accuracy_per_rotation": [
+        0.7001972386587771,
+        0.7001972386587771,
+        0.7001972386587771,
+        0.7001972386587771
+      ],
+      "mean": 0.7001972386587771,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.05_s1",
+      "architecture": "equivariant",
+      "label_fraction": 0.05,
+      "accuracy_per_rotation": [
+        0.6756832910679065,
+        0.6756832910679065,
+        0.6756832910679065,
+        0.6756832910679065
+      ],
+      "mean": 0.6756832910679065,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.05_s2",
+      "architecture": "equivariant",
+      "label_fraction": 0.05,
+      "accuracy_per_rotation": [
+        0.7030149337841646,
+        0.7030149337841646,
+        0.7030149337841646,
+        0.7030149337841646
+      ],
+      "mean": 0.7030149337841646,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.1_s0",
+      "architecture": "equivariant",
+      "label_fraction": 0.1,
+      "accuracy_per_rotation": [
+        0.760777683854607,
+        0.760777683854607,
+        0.760777683854607,
+        0.760777683854607
+      ],
+      "mean": 0.760777683854607,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.1_s1",
+      "architecture": "equivariant",
+      "label_fraction": 0.1,
+      "accuracy_per_rotation": [
+        0.7461256692025923,
+        0.7461256692025923,
+        0.7461256692025923,
+        0.7461256692025923
+      ],
+      "mean": 0.7461256692025923,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.1_s2",
+      "architecture": "equivariant",
+      "label_fraction": 0.1,
+      "accuracy_per_rotation": [
+        0.7762750070442378,
+        0.7762750070442378,
+        0.7762750070442378,
+        0.7762750070442378
+      ],
+      "mean": 0.7762750070442378,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.2_s0",
+      "architecture": "equivariant",
+      "label_fraction": 0.2,
+      "accuracy_per_rotation": [
+        0.7861369399830939,
+        0.7861369399830939,
+        0.7861369399830939,
+        0.7861369399830939
+      ],
+      "mean": 0.7861369399830939,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.2_s1",
+      "architecture": "equivariant",
+      "label_fraction": 0.2,
+      "accuracy_per_rotation": [
+        0.7810650887573964,
+        0.7810650887573964,
+        0.7810650887573964,
+        0.7810650887573964
+      ],
+      "mean": 0.7810650887573964,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.2_s2",
+      "architecture": "equivariant",
+      "label_fraction": 0.2,
+      "accuracy_per_rotation": [
+        0.8007889546351085,
+        0.8007889546351085,
+        0.8007889546351085,
+        0.8007889546351085
+      ],
+      "mean": 0.8007889546351085,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.5_s0",
+      "architecture": "equivariant",
+      "label_fraction": 0.5,
+      "accuracy_per_rotation": [
+        0.8143138912369682,
+        0.8143138912369682,
+        0.8143138912369682,
+        0.8143138912369682
+      ],
+      "mean": 0.8143138912369682,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.5_s1",
+      "architecture": "equivariant",
+      "label_fraction": 0.5,
+      "accuracy_per_rotation": [
+        0.8072696534234995,
+        0.8072696534234995,
+        0.8072696534234995,
+        0.8072696534234995
+      ],
+      "mean": 0.8072696534234995,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f0.5_s2",
+      "architecture": "equivariant",
+      "label_fraction": 0.5,
+      "accuracy_per_rotation": [
+        0.8131868131868132,
+        0.8131868131868132,
+        0.8131868131868132,
+        0.8131868131868132
+      ],
+      "mean": 0.8131868131868132,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f1_s0",
+      "architecture": "equivariant",
+      "label_fraction": 1.0,
+      "accuracy_per_rotation": [
+        0.8162862778247394,
+        0.8162862778247394,
+        0.8162862778247394,
+        0.8162862778247394
+      ],
+      "mean": 0.8162862778247394,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f1_s1",
+      "architecture": "equivariant",
+      "label_fraction": 1.0,
+      "accuracy_per_rotation": [
+        0.8244575936883629,
+        0.8244575936883629,
+        0.8244575936883629,
+        0.8244575936883629
+      ],
+      "mean": 0.8244575936883629,
+      "spread": 0.0,
+      "std": 0.0
+    },
+    {
+      "checkpoint": "equivariant_C8_f1_s2",
+      "architecture": "equivariant",
+      "label_fraction": 1.0,
+      "accuracy_per_rotation": [
+        0.8244575936883629,
+        0.8244575936883629,
+        0.8244575936883629,
+        0.8244575936883629
+      ],
+      "mean": 0.8244575936883629,
+      "spread": 0.0,
+      "std": 0.0
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "mean_accuracy_spread_across_grid_rotations": 0.00580445195829807,
+      "max_spread": 0.009580163426317179,
+      "n_checkpoints": 15
+    },
+    "equivariant": {
+      "mean_accuracy_spread_across_grid_rotations": 0.0,
+      "max_spread": 0.0,
+      "n_checkpoints": 15
+    },
+    "equivariant_spread_is_exactly_zero": true,
+    "ratio_baseline_over_equivariant": null
+  }
+}

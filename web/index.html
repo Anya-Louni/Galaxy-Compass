@@ -1,0 +1,1473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galaxies Without a Compass</title>
+<meta name="description" content="Galaxies Without a Compass: Learning Under Rotational Symmetry. Rotation-equivariant convolutional networks on Galaxy10 DECaLS, with a self-supervised atlas of 17,736 galaxies.">
+<style>
+:root{
+  color-scheme: dark;
+  /* Deep field. Values chosen against the reading scene: long-form technical
+     prose over live astronomical imagery, read at low ambient light. */
+  --void:#05070d;
+  --deep:#0a0e18;
+  --rise:#121826;
+  --ink:#f0f3f9;
+  --ink-2:#b6c0d4;
+  --ink-3:#7c8799;
+  --rule:#1b2333;
+  --rule-2:#2a3448;
+  --beam:#7fb2f2;
+  --beam-dim:#3d6ea8;
+  --s1:#3987e5;
+  --s2:#d95926;
+  --s3:#199e70;
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+  /* Sized so the rendered line lands inside the 65-75 character band once
+     the shell's horizontal padding is subtracted. */
+  --measure:74ch;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--void); color:var(--ink);
+  font:400 18px/1.72 var(--serif);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+/* Nebulosity. Fixed, very low opacity, behind everything. */
+body::before{
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(58vw 46vw at 12% 8%,  rgba(58,102,170,.16), transparent 62%),
+    radial-gradient(48vw 40vw at 92% 34%, rgba(120,72,168,.12), transparent 64%),
+    radial-gradient(60vw 50vw at 44% 96%, rgba(28,86,132,.14), transparent 66%);
+}
+main,header,footer{position:relative; z-index:1}
+
+h1,h2,h3{font-family:var(--serif); font-weight:600; line-height:1.16; margin:0}
+h2{font-size:1.72rem; letter-spacing:-.012em}
+h3{font-size:1.12rem; font-weight:600; letter-spacing:-.005em}
+p{margin:0 0 1.15em}
+a{color:var(--beam); text-decoration:none; border-bottom:1px solid rgba(127,178,242,.32)}
+a:hover{border-bottom-color:var(--beam)}
+strong,b{font-weight:700; color:#fff}
+.num{font-family:var(--mono); font-size:.94em; font-variant-numeric:tabular-nums}
+
+.shell{max-width:var(--measure); margin:0 auto; padding:0 26px}
+.wide{max-width:1000px; margin:0 auto; padding:0 26px}
+
+/* ------------------------------------------------------------------ hero */
+#hero{position:relative; height:100svh; min-height:620px; overflow:hidden}
+#atlasHero{position:absolute; inset:0; width:100%; height:100%; display:block}
+#hero .scrim{position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(78% 62% at 50% 44%, rgba(5,7,13,.90) 0%, rgba(5,7,13,.62) 42%, rgba(5,7,13,.12) 74%),
+    linear-gradient(to bottom, rgba(5,7,13,.72) 0%, rgba(5,7,13,0) 26%, rgba(5,7,13,0) 58%, var(--void) 100%);
+}
+#hero .titleblock{
+  position:absolute; inset:0; z-index:2; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; padding:0 26px;
+}
+#hero h1{
+  font-size:clamp(2.35rem,6.2vw,4.6rem); font-weight:600;
+  letter-spacing:-.031em; max-width:16ch; text-wrap:balance;
+  text-shadow:0 2px 40px rgba(5,7,13,.9);
+}
+#hero .sub{
+  margin-top:1.15rem; font-size:clamp(1.02rem,1.7vw,1.28rem); color:var(--ink-2);
+  max-width:52ch; text-wrap:balance;
+}
+#hero .author{
+  margin-top:1.5rem; font:400 1.02rem/1.5 var(--serif); color:var(--ink-2);
+  letter-spacing:.005em;
+}
+#hero .dateline{
+  margin-top:.5rem; font:500 12.5px/1.6 var(--sans); letter-spacing:.06em;
+  color:var(--ink-3);
+}
+#hero .hairline{width:74px; height:1px; margin:1.7rem auto 0;
+  background:linear-gradient(90deg,transparent,var(--beam-dim),transparent)}
+.cue{position:absolute; bottom:24px; left:50%; transform:translateX(-50%); z-index:2;
+  font:500 11px/1 var(--sans); letter-spacing:.18em; text-transform:uppercase;
+  color:var(--ink-3)}
+.cue::after{content:''; display:block; width:1px; height:26px; margin:11px auto 0;
+  background:linear-gradient(var(--ink-3),transparent)}
+
+/* --------------------------------------------------------------- masthead */
+#masthead{
+  position:fixed; top:0; left:0; right:0; z-index:40; height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 22px; background:rgba(5,7,13,.82);
+  border-bottom:1px solid transparent; backdrop-filter:blur(14px);
+  opacity:0; pointer-events:none; transition:opacity .3s ease;
+}
+#masthead.on{opacity:1; pointer-events:auto; border-bottom-color:var(--rule)}
+#masthead .t{font:600 14px/1 var(--serif); letter-spacing:-.01em}
+#masthead .r{font:500 11.5px/1 var(--sans); color:var(--ink-3); letter-spacing:.05em}
+
+/* --------------------------------------------------------- table of contents */
+#toc{
+  position:fixed; top:50%; left:26px; transform:translateY(-50%); z-index:30;
+  width:186px; display:none; opacity:0; transition:opacity .35s ease;
+}
+#toc.on{opacity:1}
+#toc ol{list-style:none; margin:0; padding:0}
+#toc li{margin:0 0 3px}
+#toc a{
+  display:block; font:500 12px/1.42 var(--sans); color:var(--ink-3);
+  padding:4px 0 4px 13px; border-left:1px solid var(--rule); border-bottom:0;
+  transition:color .18s, border-color .18s;
+}
+#toc a:hover{color:var(--ink-2); border-left-color:var(--rule-2)}
+#toc a.here{color:var(--ink); border-left-color:var(--beam)}
+@media (min-width:1320px){ #toc{display:block} }
+
+/* --------------------------------------------------------------- sections */
+section.paper{padding:76px 0; scroll-margin-top:70px}
+section.paper + section.paper{border-top:1px solid var(--rule)}
+.hdr{display:flex; gap:16px; align-items:baseline; margin-bottom:1.5rem}
+.hdr .n{font:600 13px/1.5 var(--mono); color:var(--beam-dim);
+  flex:0 0 auto; padding-top:.42em}
+.lead{font-size:1.1rem; color:var(--ink-2)}
+.note{font-size:.95rem; color:var(--ink-3)}
+
+/* Abstract, set apart the way a journal sets it apart: measure and rules. */
+#abstract{padding:72px 0 66px}
+#abstract .body{border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+  padding:30px 0 20px}
+#abstract h2{font-size:.78rem; font-family:var(--sans); font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3);
+  margin-bottom:1.1rem}
+
+/* ---------------------------------------------------------------- figures */
+figure{margin:34px 0 0}
+figure.bleed{margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+  max-width:100vw; padding:0 26px}
+figcaption{margin-top:15px; font-size:.9rem; line-height:1.6; color:var(--ink-3);
+  max-width:74ch}
+figcaption b{color:var(--ink-2); font-weight:600}
+.panel{background:var(--deep); border:1px solid var(--rule); border-radius:3px;
+  padding:22px 22px 16px}
+
+/* ----------------------------------------------------------------- tables */
+.tablewrap{overflow-x:auto; margin-top:8px}
+table.data{width:100%; border-collapse:collapse; font:400 14.5px/1.5 var(--sans)}
+table.data caption{text-align:left; font-size:.9rem; color:var(--ink-3);
+  padding-bottom:11px}
+table.data th,table.data td{padding:9px 14px; text-align:right;
+  font-variant-numeric:tabular-nums}
+table.data th:first-child,table.data td:first-child{text-align:left; padding-left:0}
+table.data th:last-child,table.data td:last-child{padding-right:0}
+table.data thead th{color:var(--ink-3); font-weight:600; font-size:.78rem;
+  letter-spacing:.055em; text-transform:uppercase;
+  border-bottom:1px solid var(--rule-2); padding-bottom:8px}
+table.data tbody td{border-bottom:1px solid var(--rule); color:var(--ink-2)}
+table.data tbody tr:last-child td{border-bottom:0}
+table.data td b{color:#fff}
+details.tv{margin-top:14px}
+details.tv summary{cursor:pointer; font:500 13px/1 var(--sans); color:var(--ink-3);
+  padding:5px 0}
+details.tv summary:hover{color:var(--ink-2)}
+
+/* ------------------------------------------------------------------ atlas */
+#atlasBox{position:relative; height:min(80svh,780px); border:1px solid var(--rule);
+  border-radius:3px; overflow:hidden; background:#04060b}
+#atlasMain{width:100%; height:100%; display:block; cursor:grab}
+#atlasMain.drag{cursor:grabbing}
+.controls{position:absolute; top:15px; left:15px; right:15px; z-index:3;
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center; pointer-events:none}
+.controls>*{pointer-events:auto}
+.seg{display:flex; background:rgba(6,9,16,.86); border:1px solid var(--rule-2);
+  border-radius:3px; padding:3px; backdrop-filter:blur(12px)}
+.seg button{background:none; border:0; color:var(--ink-3); cursor:pointer;
+  font:500 12.5px/1 var(--sans); padding:8px 13px; border-radius:2px;
+  transition:color .16s, background .16s}
+.seg button:hover{color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--rise); color:var(--ink)}
+select.pill{background:rgba(6,9,16,.86); color:var(--ink-2);
+  border:1px solid var(--rule-2); border-radius:3px; padding:9px 11px;
+  font:500 12.5px var(--sans); backdrop-filter:blur(12px)}
+.hint{position:absolute; bottom:13px; left:15px; z-index:3;
+  font:500 11px/1.5 var(--sans); letter-spacing:.05em; color:var(--ink-3);
+  background:rgba(6,9,16,.76); border:1px solid var(--rule); border-radius:3px;
+  padding:6px 10px; backdrop-filter:blur(12px)}
+#inspect{position:absolute; z-index:4; pointer-events:none; min-width:198px;
+  background:rgba(6,9,16,.95); border:1px solid var(--rule-2); border-radius:3px;
+  padding:11px 13px; backdrop-filter:blur(14px); opacity:0; transition:opacity .12s}
+#inspect .cls{font:600 13.5px/1.3 var(--sans); color:var(--ink); margin-bottom:7px}
+#inspect .row{display:flex; justify-content:space-between; gap:16px;
+  font:400 11.5px/1.75 var(--mono); color:var(--ink-3)}
+#inspect .row b{color:var(--ink-2); font-weight:500}
+
+/* --------------------------------------------------------------- rotation */
+.rotgrid{display:grid; grid-template-columns:236px 1fr; gap:30px; align-items:start}
+#rotCanvas{width:236px; height:236px; display:block; border-radius:3px;
+  border:1px solid var(--rule); background:#04060b}
+.barblock+.barblock{margin-top:20px}
+.barblock h3{display:flex; align-items:center; gap:10px; margin-bottom:11px;
+  font:600 14px/1 var(--sans)}
+.dot{width:9px; height:9px; border-radius:2px; flex:0 0 auto}
+.tag{margin-left:auto; font:500 11px/1.6 var(--mono); color:var(--ink-3);
+  border:1px solid var(--rule); border-radius:2px; padding:1px 7px}
+.bar{display:grid; grid-template-columns:158px 1fr 44px; gap:10px;
+  align-items:center; margin-bottom:4px; font:400 12px/1.5 var(--sans);
+  color:var(--ink-3)}
+.bar .track{height:8px; background:var(--rise); border-radius:1px; overflow:hidden}
+/* Scaled rather than resized: these bars update every 90 ms, and animating
+   width would relayout the row on each frame. */
+.bar .fill{height:100%; width:100%; transform:scaleX(0);
+  transform-origin:left center; transition:transform .09s linear}
+.bar .val{text-align:right; font:400 11px/1 var(--mono); color:var(--ink-2)}
+
+/* ------------------------------------------------------------ interpolate */
+.interpgrid{display:grid; grid-template-columns:1fr 1fr; gap:30px; align-items:start}
+#interpCanvas{width:100%; max-width:430px; aspect-ratio:1; display:block;
+  border-radius:3px; border:1px solid var(--rule); background:#04060b}
+#traceCanvas{width:100%; height:200px; display:block; border-radius:3px;
+  border:1px solid var(--rule); background:var(--deep)}
+.legend{display:flex; gap:19px; flex-wrap:wrap; margin-top:13px;
+  font:400 13px/1.5 var(--sans); color:var(--ink-2)}
+.legend .item{display:flex; align-items:center; gap:8px}
+.sw{width:11px; height:11px; border-radius:2px; flex:0 0 auto}
+
+/* ---------------------------------------------------------------- gallery */
+.gal{display:grid; grid-template-columns:repeat(auto-fill,minmax(126px,1fr));
+  gap:13px; margin-top:8px}
+.gal a{display:block; border:1px solid var(--rule); border-radius:3px;
+  overflow:hidden; background:var(--deep); border-bottom:1px solid var(--rule);
+  transition:border-color .16s, transform .16s}
+.gal a:hover{border-color:var(--beam-dim); transform:translateY(-2px)}
+.gal canvas{width:100%; display:block; aspect-ratio:1; background:#04060b}
+.gal .m{padding:8px 10px 9px}
+.gal .r{font:600 10.5px/1.4 var(--mono); color:var(--beam)}
+.gal .c{font:400 11.5px/1.35 var(--sans); color:var(--ink-3);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+/* ------------------------------------------------------------------- misc */
+ul.clean{margin:0 0 1.15em; padding-left:1.2em; color:var(--ink-2)}
+ul.clean li{margin-bottom:.62em}
+ul.clean li::marker{color:var(--beam-dim)}
+.aside{margin:26px 0; padding:20px 24px; background:var(--deep);
+  border:1px solid var(--rule); border-radius:3px; font-size:.98rem;
+  color:var(--ink-2)}
+.aside h3{margin-bottom:.6rem; font-size:1rem}
+code{font:400 .88em/1.5 var(--mono); background:var(--rise); color:var(--ink-2);
+  padding:2px 6px; border-radius:2px}
+pre{background:var(--deep); border:1px solid var(--rule); border-radius:3px;
+  padding:19px 21px; overflow-x:auto; font:400 13px/1.72 var(--mono);
+  color:var(--ink-2)}
+pre code{background:none; padding:0}
+ol.refs{margin:0; padding-left:1.6em; font-size:.95rem; color:var(--ink-2)}
+ol.refs li{margin-bottom:.72em}
+ol.refs li::marker{color:var(--ink-3); font-family:var(--mono); font-size:.85em}
+footer{border-top:1px solid var(--rule); padding:44px 0 72px;
+  font-size:.88rem; color:var(--ink-3)}
+
+.reveal{opacity:0; transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1; transform:none}
+
+@media (max-width:900px){
+  body{font-size:17px}
+  .rotgrid,.interpgrid{grid-template-columns:1fr}
+  #rotCanvas{width:100%; max-width:236px; height:auto; aspect-ratio:1}
+  section.paper{padding:56px 0}
+  figure.bleed{margin-left:0; margin-right:0; max-width:100%; padding:0}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation:none !important; transition:none !important}
+  .reveal{opacity:1; transform:none}
+}
+</style>
+</head>
+<body>
+
+<header id="masthead">
+  <span class="t">Galaxies Without a Compass</span>
+  <span class="r" id="mastRight"></span>
+</header>
+
+<nav id="toc" aria-label="Contents"><ol id="tocList"></ol></nav>
+
+<section id="hero">
+  <canvas id="atlasHero"></canvas>
+  <div class="scrim"></div>
+  <div class="titleblock">
+    <h1>Galaxies Without a Compass</h1>
+    <p class="sub">Learning Under Rotational Symmetry</p>
+    <div class="hairline"></div>
+    <div class="author">Anya Louni</div>
+    <div class="dateline" id="dateline"></div>
+  </div>
+  <div class="cue">Scroll</div>
+</section>
+
+<main>
+
+<section id="abstract" class="paper">
+  <div class="shell">
+    <div class="body">
+      <h2>Abstract</h2>
+      <p>Galaxy morphology carries no preferred orientation. A spiral photographed at any
+      position angle belongs to the same class, and the classifier that reads it should
+      return the same answer. This work encodes that symmetry in the architecture of a
+      convolutional network using E(2)-steerable convolutions, then measures what the
+      encoding is worth against a dense baseline matched in convolutional cost and trained
+      with the same full-circle rotation and reflection augmentation.</p>
+      <p>On Galaxy10 DECaLS the steerable network reaches the baseline's fully supervised
+      accuracy using <b><span id="ab-cross">14</span> percent</b> of the labels and exceeds
+      it by <b><span id="ab-gap">4.7</span> points</b> at full supervision, while carrying
+      <b><span id="ab-par">11.8</span> times fewer parameters</b> at identical convolutional
+      throughput. Its predictions are invariant to the four grid rotations to numerical
+      precision. Averaging the baseline over the dihedral orbit at inference time recovers
+      <b><span id="ab-tta">0.36</span> points</b> for eight times the compute, leaving the
+      separation intact. The same encoder trained without labels under a contrastive
+      objective supports a k-nearest-neighbour probe at
+      <b><span id="ab-knn">67.2</span> percent</b> and yields a two-dimensional atlas of all
+      17,736 galaxies, from which a combined reconstruction and isolation score ranks
+      candidate anomalies.</p>
+    </div>
+  </div>
+</section>
+
+<section id="intro" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">1</span><h2>Orientation as nuisance</h2></div>
+    <p class="lead">Every morphology label in Galaxy Zoo describes shape. Position angle on
+    the sky is set by the geometry of the observation, and it varies with the telescope's
+    pointing and the survey's scan pattern.</p>
+    <p>A classifier trained on such images faces a choice of representation. It can learn a
+    separate response for each orientation of each structure, spending capacity and labels on
+    a degree of freedom that carries no information about the class. It can be shown rotated
+    copies during training and asked to infer that the rotations are equivalent. Or the
+    equivalence can be written into the operator itself, so the response transforms with the
+    input by construction.</p>
+    <p>The third option is the subject of this work. E(2)-steerable convolutions constrain
+    the filter bank to a basis that commutes with the action of a chosen symmetry group, so a
+    rotated input produces a correspondingly rotated feature map at every layer. Reducing
+    over the group axis at the end yields a representation that is invariant before any
+    weight is trained.</p>
+    <p>The question is what that constraint buys once a competent baseline has been given the
+    same symmetry through augmentation. The experiments below hold convolutional cost,
+    augmentation, optimisation budget and evaluation protocol fixed, vary only the operator,
+    and measure the difference in how many labels each architecture requires.</p>
+  </div>
+</section>
+
+<section id="data" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">2</span><h2>Data</h2></div>
+    <p>Galaxy10 DECaLS provides 17,736 colour cutouts assembled from the DESI Legacy Imaging
+    Surveys in the g, r and z bands, labelled into ten morphology classes from aggregated
+    Galaxy Zoo votes. Preprocessing verifies the source file by SHA-256 and asserts the ten
+    published per-class counts before writing any derived array, so a truncated or
+    substituted file halts the pipeline.</p>
+    <p>Images are cropped from 256 to 224 pixels, stored at 95 pixels, and presented to the
+    network at 65. The stored margin exists to keep rotation augmentation well posed: a 95
+    pixel frame rotated through any angle still covers the central 65 pixel field with
+    observed sky, since 95 divided by the square root of two is 67.2. Cropping tighter would
+    admit undefined corners whose orientation the network can read in place of the
+    morphology.</p>
+    <p>The crop is set from the data. Stacking the radial surface brightness profile of all
+    17,736 galaxies places <b>96.9 percent</b> of the light above sky inside the crop, with
+    the profile at the crop edge sitting at 1.4 percent of its central value. Splits are
+    stratified under a fixed seed at 12,415 training, 1,772 validation and 3,549 test
+    galaxies.</p>
+    <div class="aside">
+      <h3>Colour is a measurement</h3>
+      <p style="margin:0">Rotation, reflection and small translations are applied freely,
+      since each is an exact symmetry of the labelling function. The three channels are
+      photometric bands, and their ratios encode stellar population age, dust content and
+      redshift. Brightness, contrast and hue jitter are standard on natural images and would
+      destroy that signal, so the augmentation pipeline leaves colour untouched and perturbs
+      only with additive noise, which models the detector and the sky background.</p>
+    </div>
+  </div>
+</section>
+
+<section id="method" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">3</span><h2>Architecture and controls</h2></div>
+    <p>Both networks share a width schedule of 32, 64, 128 and 256 channels, kernels of 5, 3,
+    3 and 3, and four stages of antialiased blur-pool downsampling. The steerable model
+    realises each width as copies of the regular representation of the cyclic group C8; the
+    dense model uses plain channels. Because e2cnn expands its steerable basis into a dense
+    filter bank and calls the same convolution, the two perform an identical
+    <span class="num" id="m-macs">75.4</span> million multiply-accumulates per image.</p>
+    <p>Weight sharing across the group is the mechanism that produces equivariance, so the
+    steerable model spends fewer weights per layer. The dense baseline therefore holds
+    <span class="num" id="m-parb">393,514</span> parameters against
+    <span class="num" id="m-pare">33,286</span>, a factor of
+    <b><span id="m-ratio">11.8</span></b>. The baseline receives the larger parameter budget,
+    the same compute, the same full-circle rotation and reflection augmentation, and the same
+    step budget. Runs share a fixed number of gradient steps rather than a fixed number of
+    epochs, so a model trained on all the labels receives the same optimisation budget as one
+    trained on a twentieth of them.</p>
+
+    <h3 style="margin-top:2rem">Why the input is 65 pixels wide</h3>
+    <p>A steerable convolution is equivariant to the precision of the arithmetic. Stride-2
+    subsampling introduces a second condition. On an even grid the centre of rotation falls
+    between pixels, the retained lattice maps to a shifted lattice under a quarter turn, and
+    the discrepancy compounds through the depth of the network. An odd grid fixes the centre
+    pixel and preserves the lattice.</p>
+    <p>The effect is large enough to determine the design. Measured drift of the
+    representation under a quarter turn falls from
+    <span class="num">4.7&times;10<sup>-2</sup></span> at 64 pixels to
+    <span class="num" id="m-inv">8.8&times;10<sup>-8</sup></span> at 65. A single steerable
+    layer tests at <span class="num" id="m-lay">5.5&times;10<sup>-7</sup></span> relative
+    error on the exact grid rotations.</p>
+    <figure>
+      <div class="panel tablewrap">
+        <table class="data">
+          <caption>Table 1. Downsampling configurations, ranked by end-to-end drift of the
+            representation under a quarter turn.</caption>
+          <thead><tr><th>Input</th><th>Pooling</th><th>Drift</th></tr></thead>
+          <tbody>
+            <tr><td>64</td><td>antialiased blur-pool</td><td>4.7 &times; 10<sup>-2</sup></td></tr>
+            <tr><td>63</td><td>antialiased blur-pool</td><td>5.3 &times; 10<sup>-2</sup></td></tr>
+            <tr><td>64</td><td>2 &times; 2 average</td><td>9.6 &times; 10<sup>-8</sup></td></tr>
+            <tr><td><b>65</b></td><td><b>antialiased blur-pool</b></td><td><b>8.8 &times; 10<sup>-8</sup></b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figcaption>The two configurations reaching numerical precision differ in their
+      treatment of frequencies above the sampling limit. Blur-pool at 65 pixels was selected:
+      it is the correct equivariant subsampling operator for the continuous group and retains
+      a 5 by 5 final feature map.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="efficiency" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">4</span><h2>Label efficiency</h2></div>
+    <p class="lead">Morphology labels are the expensive input. The Galaxy Zoo classifications
+    behind this dataset represent millions of human judgements, and a model that reaches a
+    given accuracy from fewer of them is worth the difference.</p>
+    <p id="eff-summary"></p>
+  </div>
+  <div class="wide">
+    <figure class="reveal">
+      <div class="panel">
+        <div class="legend" id="curveLegend" style="margin:0 0 10px"></div>
+        <div id="curveChart"></div>
+      </div>
+      <figcaption id="curveCaption"></figcaption>
+      <details class="tv"><summary>Table 2. Numerical values</summary>
+        <div class="tablewrap" id="curveTable"></div>
+      </details>
+    </figure>
+  </div>
+  <div class="shell">
+    <p style="margin-top:2rem" id="eff-paired"></p>
+    <p id="eff-plateau"></p>
+  </div>
+</section>
+
+<section id="invariance" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">5</span><h2>Invariance under rotation</h2></div>
+    <p>Both networks below were trained on the full label set with identical full-circle
+    rotation augmentation. The galaxy turns through a complete revolution; the bars report
+    each model's class probabilities at that orientation.</p>
+  </div>
+  <div class="wide">
+    <div class="rotgrid reveal" style="margin-top:30px">
+      <div>
+        <canvas id="rotCanvas" width="260" height="260"></canvas>
+        <p class="note" id="rotMeta" style="margin:13px 0 0"></p>
+        <div class="seg" style="margin-top:13px; display:inline-flex">
+          <button id="rotPrev" aria-label="Previous galaxy">&larr;</button>
+          <button id="rotPlay" aria-pressed="true">Pause</button>
+          <button id="rotNext" aria-label="Next galaxy">&rarr;</button>
+        </div>
+      </div>
+      <div>
+        <div class="barblock">
+          <h3><span class="dot" style="background:var(--s1)"></span>C8-steerable
+            <span class="tag" id="eqSwing"></span></h3>
+          <div id="eqBars"></div>
+        </div>
+        <div class="barblock">
+          <h3><span class="dot" style="background:var(--s2)"></span>Dense CNN
+            <span class="tag" id="blSwing"></span></h3>
+          <div id="blBars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="shell">
+    <p style="margin-top:30px" id="inv-body"></p>
+    <p id="inv-exact"></p>
+  </div>
+</section>
+
+<section id="tta" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">6</span><h2>Averaging over the orbit</h2></div>
+    <p class="lead">An invariant prediction is available without a steerable architecture.
+    Evaluating an ordinary network on every rotation of the input and averaging the
+    probabilities produces an exactly invariant output, for the same reason group pooling
+    does, at a cost of one forward pass per group element.</p>
+    <p>Every checkpoint was therefore re-scored with predictions averaged over the eight
+    element dihedral orbit, four quarter turns and their reflections, each a lossless
+    permutation of pixels. Both architectures received the identical treatment.</p>
+    <figure>
+      <div class="panel tablewrap" id="ttaTable"></div>
+      <figcaption>Table 3. Test accuracy at full supervision under three inference budgets.
+      C8 contains the four rotations, so averaging over them returns the steerable model
+      unchanged to every printed digit; reflections lie outside the group and contribute a
+      small gain.</figcaption>
+    </figure>
+    <p style="margin-top:2rem" id="tta-body"></p>
+    <p id="tta-eff"></p>
+  </div>
+</section>
+
+<section id="atlas" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">7</span><h2>Structure without labels</h2></div>
+    <p>The same steerable encoder was trained under a contrastive objective on the training
+    split alone, with no labels at any point. The transformations it is asked to discount are
+    those a telescope could have produced differently: orientation, parity, pointing,
+    seeing-scale and noise realisation. Rotation invariance arrives from the architecture, so
+    the objective spends its capacity on the remainder.</p>
+    <p id="atlas-body"></p>
+  </div>
+  <div class="wide">
+    <figure class="reveal">
+      <div id="atlasBox">
+        <canvas id="atlasMain"></canvas>
+        <div class="controls">
+          <div class="seg" id="modeSeg">
+            <button data-mode="none" aria-pressed="true">Imagery</button>
+            <button data-mode="anomaly">Anomaly score</button>
+            <button data-mode="redshift">Redshift</button>
+          </div>
+          <select class="pill" id="classSel" aria-label="Highlight a morphology class">
+            <option value="-1">Highlight a class</option>
+          </select>
+          <div class="seg"><button id="resetView">Reset view</button></div>
+        </div>
+        <div class="hint">Drag to pan &middot; scroll to zoom &middot; hover to inspect</div>
+        <div id="inspect"></div>
+      </div>
+      <figcaption>Figure 2. All 17,736 galaxies positioned by a UMAP projection of the
+      self-supervised representation. Every tile is survey imagery at the resolution the
+      network receives. Position carries no label information.</figcaption>
+    </figure>
+  </div>
+  <div class="wide">
+    <figure>
+      <div class="panel tablewrap" id="sslTable"></div>
+      <figcaption>Table 4. Measurements taken on the full-dimensional representation before
+      projection, together with the fidelity of the projection itself.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="latent" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">8</span><h2>Latent geometry</h2></div>
+    <p>Reconstruction requires orientation, and the classifier discards it by construction,
+    so a separate convolutional autoencoder was trained for this section. Paths are drawn
+    between class medoids, the observed galaxy nearest its class centroid in latent space,
+    and decoded frame by frame. The trace reports the steerable classifier reading each
+    decoded frame, which turns the sequence into a measurement of how morphology varies along
+    the path.</p>
+  </div>
+  <div class="wide">
+    <div class="interpgrid reveal" style="margin-top:30px">
+      <div>
+        <canvas id="interpCanvas" width="360" height="360"></canvas>
+        <select class="pill" id="pathSel" style="margin-top:13px; width:100%"
+          aria-label="Interpolation path"></select>
+      </div>
+      <div>
+        <h3 style="margin-bottom:11px">Classifier response along the path</h3>
+        <canvas id="traceCanvas"></canvas>
+        <div class="legend" id="traceLegend"></div>
+        <p class="note" style="margin-top:11px">Endpoints are catalogued galaxies. Every
+        intermediate frame is decoder output.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="anomaly" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">9</span><h2>Ranking the unusual</h2></div>
+    <p>Two signals are combined. Reconstruction error responds to structure the autoencoder
+    never learned to express, and rises with brightness, size and noise. Local isolation,
+    measured as mean cosine distance to the twenty nearest neighbours in the self-supervised
+    embedding, responds to objects lacking close analogues, and rises along the sparse tail of
+    common classes. Their rank correlation is <span class="num" id="an-corr"></span>, so the
+    combined percentile rank draws on two largely independent views.</p>
+    <p id="an-body"></p>
+  </div>
+  <div class="wide">
+    <figure class="reveal">
+      <div class="gal" id="gallery"></div>
+      <figcaption>Figure 3. The hundred highest ranked candidates. Each links to the DESI
+      Legacy Survey viewer at its coordinates. The list is written for inspection; membership
+      indicates distance from the training distribution, which includes artefacts, blends and
+      bright foreground stars.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="limits" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">10</span><h2>Limitations</h2></div>
+    <ul class="clean">
+      <li><b>Scale.</b> These networks are small, trained at 65 pixels on a laptop CPU.
+      Absolute accuracy sits well below the published state of the art on this dataset, where
+      Pandya and collaborators report 95.5 percent from a larger D16-steerable network at
+      higher resolution on four A100 GPUs. The claim here concerns the shape of the
+      label-efficiency curve under a controlled comparison.</li>
+      <li><b>Model selection.</b> The validation set is held at 10 percent of the data for
+      every label fraction. A strictly realistic low-label protocol would shrink it in
+      proportion. Holding it fixed flatters the low-fraction points in absolute terms, and
+      does so identically for both architectures.</li>
+      <li><b>Seeds.</b> Error bars are one standard deviation over three seeds, sufficient to
+      separate the architectures and too few for a tight interval. The crossing fraction is
+      reported as a per-seed range for this reason.</li>
+      <li><b>Group coverage.</b> Only C8 was trained. Dihedral groups and other orders remain
+      untested here, and the literature reports gains from both.</li>
+      <li><b>Label quality.</b> Galaxy Zoo labels are aggregated human votes carrying real
+      disagreement, concentrated between tight and loose spirals and among disturbed
+      galaxies. That disagreement bounds every accuracy figure above.</li>
+      <li><b>Self-supervised budget.</b> The contrastive encoder saw 39 epoch-equivalents,
+      short by the standards of the method. The reported probe accuracy is a floor.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="repro" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">11</span><h2>Reproduction</h2></div>
+    <p>Every figure and number on this page is read from a result file written by the
+    pipeline below. All stages run on CPU.</p>
+<pre><code>pip install -r requirements.txt
+curl -L -o data/raw/Galaxy10_DECals.h5 \
+  "https://zenodo.org/records/10845026/files/Galaxy10_DECals.h5?download=1"
+
+python -m src.data                      # verify checksum, build splits
+python scripts/verify_equivariance.py   # equivariance and cost audit
+python scripts/inspect_data.py          # crop geometry against light profile
+
+python scripts/run_sweep.py --seeds 0 1 2
+python scripts/run_downstream.py
+python scripts/tta_baseline.py &amp;&amp; python scripts/tta_matched_cost.py
+python scripts/export_web.py &amp;&amp; python scripts/check_assets.py</code></pre>
+  </div>
+</section>
+
+<section id="refs" class="paper">
+  <div class="shell">
+    <div class="hdr"><span class="n">12</span><h2>References</h2></div>
+    <ol class="refs">
+      <li>Cohen, T. and Welling, M. Group Equivariant Convolutional Networks.
+        <i>ICML</i>, 2016.</li>
+      <li>Weiler, M. and Cesa, G. General E(2)-Equivariant Steerable CNNs.
+        <i>NeurIPS</i>, 2019.</li>
+      <li>Dieleman, S., Willett, K. W. and Dambre, J. Rotation-invariant convolutional
+        neural networks for galaxy morphology prediction. <i>MNRAS</i>, 450, 2015.</li>
+      <li>Pandya, S., Patel, P., O, F. and Blazek, J. E(2) Equivariant Neural Networks for
+        Robust Galaxy Morphology Classification. <i>NeurIPS Machine Learning and the
+        Physical Sciences workshop</i>, 2023. arXiv:2311.01500.</li>
+      <li>Chen, T., Kornblith, S., Norouzi, M. and Hinton, G. A Simple Framework for
+        Contrastive Learning of Visual Representations. <i>ICML</i>, 2020.</li>
+      <li>Zhang, R. Making Convolutional Networks Shift-Invariant Again.
+        <i>ICML</i>, 2019.</li>
+      <li>Walmsley, M. et al. Galaxy Zoo DECaLS: Detailed visual morphology measurements
+        from volunteers and deep learning. <i>MNRAS</i>, 509, 2022.</li>
+      <li>Dey, A. et al. Overview of the DESI Legacy Imaging Surveys.
+        <i>The Astronomical Journal</i>, 157, 2019.</li>
+      <li>Leung, H. W. and Bovy, J. Galaxy10 DECaLS, astroNN. Zenodo record 10845026.</li>
+      <li>McInnes, L., Healy, J. and Melville, J. UMAP: Uniform Manifold Approximation and
+        Projection for Dimension Reduction. arXiv:1802.03426, 2018.</li>
+    </ol>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="shell">
+    <p>Imaging from the DESI Legacy Imaging Surveys. Morphology labels from Galaxy Zoo.
+    Dataset packaged as Galaxy10 DECaLS by Leung and Bovy, Zenodo record 10845026.</p>
+    <p class="num" id="buildStamp" style="font-size:.8rem"></p>
+  </div>
+</footer>
+
+<script>
+/* =====================================================================
+   Asset loading. The hosted site fetches from assets/; the single-file
+   build pre-populates window.__ASSETS with the same objects.
+   ===================================================================== */
+const ASSETS = window.__ASSETS || {};
+async function asset(name){
+  if (ASSETS[name] !== undefined) return ASSETS[name];
+  const r = await fetch('assets/' + name);
+  if (!r.ok) throw new Error(name + ': ' + r.status);
+  return r.json();
+}
+function imageFrom(src){
+  return new Promise((res, rej) => {
+    const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src;
+  });
+}
+function atlasImage(file){
+  return imageFrom(ASSETS[file] ? ASSETS[file] : 'assets/' + file);
+}
+const pct = v => (v * 100).toFixed(1) + '%';
+const set = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+const CSS = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const S1 = '#' + '3987e5', S2 = '#' + 'd95926', S3 = '#' + '199e70';
+const TIMES = '\u00d7', ARROW = '\u2192', DOT = '\u00b7', ELL = '\u2026', DASH = '\u2014';
+
+let POINTS = null, METRICS = null, ATLAS = null, ANOM = null;
+
+/* =====================================================================
+   WebGL atlas
+   ===================================================================== */
+const VS = `#version 300 es
+precision highp float;
+in vec2 a_corner; in vec2 a_pos; in float a_tile;
+in float a_label; in float a_anom; in float a_z;
+uniform vec2 u_center; uniform float u_scale; uniform vec2 u_res;
+uniform float u_size; uniform vec2 u_atlas; uniform float u_cols; uniform float u_tilepx;
+out vec2 v_uv; out float v_label; out float v_anom; out float v_z;
+void main(){
+  float col = mod(a_tile, u_cols);
+  float row = floor(a_tile / u_cols);
+  vec2 uv0 = vec2(col * u_tilepx, row * u_tilepx) / u_atlas;
+  vec2 span = vec2(u_tilepx) / u_atlas;
+  v_uv = uv0 + (a_corner + 0.5) * span;
+  v_label = a_label; v_anom = a_anom; v_z = a_z;
+  vec2 world = a_pos + a_corner * (u_size / u_scale);
+  vec2 ndc = (world - u_center) * u_scale / (u_res * 0.5);
+  gl_Position = vec4(ndc, 0.0, 1.0);
+}`;
+
+const FS = `#version 300 es
+precision highp float;
+in vec2 v_uv; in float v_label; in float v_anom; in float v_z;
+uniform sampler2D u_tex; uniform int u_mode; uniform float u_hl;
+out vec4 outColor;
+vec3 ramp(float t){
+  vec3 a = vec3(0.094,0.310,0.584);
+  vec3 b = vec3(0.427,0.655,0.925);
+  vec3 c = vec3(0.804,0.886,0.984);
+  return t < 0.5 ? mix(a,b,t*2.0) : mix(b,c,(t-0.5)*2.0);
+}
+void main(){
+  vec3 base = texture(u_tex, v_uv).rgb;
+  float lum = dot(base, vec3(0.299,0.587,0.114));
+  vec3 col = base; float alpha = 1.0;
+  if (u_mode == 1){
+    col = mix(base * 0.55, ramp(v_anom), pow(v_anom, 2.2) * 0.85);
+    alpha = mix(0.30, 1.0, pow(v_anom, 1.6));
+  } else if (u_mode == 2){
+    if (v_z < 0.0){ col = vec3(lum) * 0.42; }
+    else { col = mix(base * 0.55, ramp(clamp(v_z / 0.15, 0.0, 1.0)), 0.62); }
+  }
+  if (u_hl >= 0.0){
+    if (abs(v_label - u_hl) < 0.5){ col = mix(col, col * vec3(1.15,1.25,1.45), 0.35); }
+    else { col = vec3(lum) * 0.30; alpha *= 0.42; }
+  }
+  outColor = vec4(col * alpha, alpha);
+}`;
+
+function compile(gl, type, src){
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+
+class AtlasView {
+  constructor(canvas, opts = {}){
+    this.canvas = canvas; this.opts = opts;
+    this.gl = canvas.getContext('webgl2', {antialias:false, alpha:false,
+      premultipliedAlpha:true, powerPreference:'high-performance'});
+    if (!this.gl) throw new Error('WebGL2 unavailable');
+    this.center = [0,0]; this.scale = 1; this.mode = 0; this.hl = -1;
+    this.pages = []; this.ready = false;
+  }
+  async init(points, atlas){
+    const gl = this.gl;
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    this.prog = prog; this.u = {};
+    for (const n of ['u_center','u_scale','u_res','u_size','u_atlas','u_cols',
+                     'u_tilepx','u_tex','u_mode','u_hl'])
+      this.u[n] = gl.getUniformLocation(prog, n);
+
+    this.quadBuf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
+    gl.bufferData(gl.ARRAY_BUFFER,
+      new Float32Array([-.5,-.5, .5,-.5, -.5,.5, .5,.5]), gl.STATIC_DRAW);
+
+    const per = atlas.per_page;
+    for (const f of atlas.files){
+      const s = f.page * per, n = f.count;
+      const pos = new Float32Array(n*2), tile = new Float32Array(n),
+            lab = new Float32Array(n), an = new Float32Array(n), zz = new Float32Array(n);
+      for (let i = 0; i < n; i++){
+        const g = s + i;
+        pos[i*2] = points.x[g]; pos[i*2+1] = points.y[g];
+        tile[i] = i; lab[i] = points.label[g];
+        an[i] = points.anomaly[g]; zz[i] = points.redshift[g];
+      }
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const mk = arr => { const b = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, arr, gl.STATIC_DRAW);
+        return b; };
+      const bind = (loc, buf, size, div) => {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribDivisor(loc, div);
+      };
+      bind(gl.getAttribLocation(prog,'a_corner'), this.quadBuf, 2, 0);
+      bind(gl.getAttribLocation(prog,'a_pos'), mk(pos), 2, 1);
+      bind(gl.getAttribLocation(prog,'a_tile'), mk(tile), 1, 1);
+      bind(gl.getAttribLocation(prog,'a_label'), mk(lab), 1, 1);
+      bind(gl.getAttribLocation(prog,'a_anom'), mk(an), 1, 1);
+      bind(gl.getAttribLocation(prog,'a_z'), mk(zz), 1, 1);
+      gl.bindVertexArray(null);
+
+      const img = await atlasImage(f.file);
+      const tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      this.pages.push({vao, tex, count:n, w:img.width, h:img.height});
+    }
+    this.atlas = atlas; this.ready = true; this.resize();
+  }
+  resize(){
+    const c = this.canvas, dpr = Math.min(devicePixelRatio || 1, 2);
+    c.width = Math.round((c.clientWidth || 300) * dpr);
+    c.height = Math.round((c.clientHeight || 150) * dpr);
+    this.gl.viewport(0, 0, c.width, c.height);
+    if (!this._fit){ this.fit(); this._fit = true; }
+  }
+  fit(){ this.scale = Math.min(this.canvas.width, this.canvas.height) * 0.46; this.center = [0,0]; }
+  draw(){
+    const gl = this.gl; if (!this.ready) return;
+    gl.clearColor(0.016, 0.024, 0.043, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(this.prog);
+    gl.uniform2f(this.u.u_center, this.center[0], this.center[1]);
+    gl.uniform1f(this.u.u_scale, this.scale);
+    gl.uniform2f(this.u.u_res, gl.canvas.width, gl.canvas.height);
+    gl.uniform1f(this.u.u_size, Math.max(this.opts.tilePx || 13, this.scale * 0.020));
+    gl.uniform1f(this.u.u_cols, this.atlas.cols);
+    gl.uniform1f(this.u.u_tilepx, this.atlas.tile);
+    gl.uniform1i(this.u.u_mode, this.mode);
+    gl.uniform1f(this.u.u_hl, this.hl);
+    gl.uniform1i(this.u.u_tex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    for (const p of this.pages){
+      gl.uniform2f(this.u.u_atlas, p.w, p.h);
+      gl.bindTexture(gl.TEXTURE_2D, p.tex);
+      gl.bindVertexArray(p.vao);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, p.count);
+    }
+    gl.bindVertexArray(null);
+  }
+  screenToWorld(sx, sy){
+    const dpr = Math.min(devicePixelRatio || 1, 2), c = this.canvas;
+    return [ (sx*dpr - c.width/2)/this.scale + this.center[0],
+             -(sy*dpr - c.height/2)/this.scale + this.center[1] ];
+  }
+}
+
+/* =====================================================================
+   Label-efficiency figure
+   ===================================================================== */
+function buildCurve(sweep){
+  const host = document.getElementById('curveChart');
+  if (!sweep || !sweep.metrics || !sweep.metrics.test_accuracy){
+    host.innerHTML = '<p class="note">Result file unavailable.</p>'; return;
+  }
+  const m = sweep.metrics.test_accuracy;
+  const W = 900, H = 420, P = {t:24, r:28, b:56, l:64};
+  const iw = W - P.l - P.r, ih = H - P.t - P.b;
+  const fr = m.equivariant.fractions;
+  const xs = v => P.l + (Math.log(v) - Math.log(fr[0])) /
+    (Math.log(fr[fr.length-1]) - Math.log(fr[0])) * iw;
+  const all = m.equivariant.mean.concat(m.baseline.mean)
+    .concat(m.equivariant.mean.map((v,i) => v - m.equivariant.std[i]))
+    .concat(m.baseline.mean.map((v,i) => v - m.baseline.std[i]));
+  let lo = Math.min(...all), hi = Math.max(...all);
+  const pad = (hi - lo) * 0.17 || 0.02; lo -= pad; hi += pad;
+  const ys = v => P.t + (1 - (v - lo)/(hi - lo)) * ih;
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', '100%'); svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Test accuracy against fraction of training labels used');
+  const add = (t, a) => { const e = document.createElementNS(ns, t);
+    for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+
+  for (let v = Math.ceil(lo*20)/20; v < hi; v += 0.05){
+    add('line', {x1:P.l, x2:W-P.r, y1:ys(v), y2:ys(v), stroke:CSS('--rule'), 'stroke-width':1});
+    add('text', {x:P.l-12, y:ys(v)+4, fill:CSS('--ink-3'), 'font-size':12,
+      'font-family':CSS('--sans'), 'text-anchor':'end'}).textContent = (v*100).toFixed(0) + '%';
+  }
+  fr.forEach(f => {
+    add('text', {x:xs(f), y:H-P.b+24, fill:CSS('--ink-3'), 'font-size':12,
+      'font-family':CSS('--sans'), 'text-anchor':'middle'}).textContent = (f*100) + '%';
+  });
+  add('text', {x:P.l+iw/2, y:H-10, fill:CSS('--ink-2'), 'font-size':13,
+    'font-family':CSS('--sans'), 'text-anchor':'middle'}).textContent =
+    'fraction of training labels used';
+  add('text', {x:17, y:P.t+ih/2, fill:CSS('--ink-2'), 'font-size':13,
+    'font-family':CSS('--sans'), 'text-anchor':'middle',
+    transform:`rotate(-90 17 ${P.t+ih/2})`}).textContent = 'test accuracy';
+
+  const tgt = m.baseline_full_label_mean;
+  add('line', {x1:P.l, x2:W-P.r, y1:ys(tgt), y2:ys(tgt), stroke:S2,
+    'stroke-width':1.5, 'stroke-dasharray':'5 4', opacity:.85});
+  add('text', {x:W-P.r-6, y:ys(tgt)-9, fill:S2, 'font-size':12,
+    'font-family':CSS('--sans'), 'text-anchor':'end'}).textContent =
+    'dense CNN, all labels';
+
+  const series = (d, color) => {
+    let band = `M ${xs(d.fractions[0])} ${ys(d.mean[0] + d.std[0])}`;
+    d.fractions.forEach((f,i) => { band += ` L ${xs(f)} ${ys(d.mean[i] + d.std[i])}`; });
+    for (let i = d.fractions.length-1; i >= 0; i--)
+      band += ` L ${xs(d.fractions[i])} ${ys(d.mean[i] - d.std[i])}`;
+    add('path', {d:band + ' Z', fill:color, opacity:.16});
+    let line = '';
+    d.fractions.forEach((f,i) => { line += (i ? ' L ' : 'M ') + xs(f) + ' ' + ys(d.mean[i]); });
+    add('path', {d:line, fill:'none', stroke:color, 'stroke-width':2,
+      'stroke-linejoin':'round', 'stroke-linecap':'round'});
+    d.fractions.forEach((f,i) => {
+      add('circle', {cx:xs(f), cy:ys(d.mean[i]), r:4.5, fill:color,
+        stroke:CSS('--deep'), 'stroke-width':2});
+    });
+  };
+  series(m.baseline, S2);
+  series(m.equivariant, S1);
+
+  const cf = m.equivariant_crossing_fraction;
+  if (cf){
+    add('line', {x1:xs(cf), x2:xs(cf), y1:P.t, y2:H-P.b, stroke:S1,
+      'stroke-width':1.4, 'stroke-dasharray':'3 4', opacity:.9});
+    add('text', {x:xs(cf)+9, y:P.t+19, fill:S1, 'font-size':13, 'font-weight':600,
+      'font-family':CSS('--sans')}).textContent = (cf*100).toFixed(0) + '% of labels';
+  }
+  host.innerHTML = ''; host.appendChild(svg);
+
+  set('curveLegend',
+    `<div class="item"><span class="sw" style="background:${S1}"></span>C8-steerable</div>
+     <div class="item"><span class="sw" style="background:${S2}"></span>Dense CNN</div>
+     <div class="item" style="color:var(--ink-3)">shaded band, one standard deviation over
+       ${sweep.seeds.length} seeds</div>`);
+
+  const ps = m.per_seed_crossing;
+  set('curveCaption',
+    `Figure 1. Test accuracy against the fraction of training labels supplied. Both models
+     perform identical convolutional work and receive identical augmentation; the dense CNN
+     carries 11.8 ${TIMES} more parameters. The horizontal line marks the dense CNN trained on
+     every label.` + (ps
+     ? ` The crossing falls on the steep portion of the curve, where a small vertical shift
+        moves it considerably in the horizontal direction, so it is also computed per seed:
+        <b>${ps.runs.map(r => (r.crossing_fraction*100).toFixed(0) + '%').join(', ')}</b>,
+        spanning ${ps.min_label_efficiency.toFixed(1)}${TIMES} to
+        ${ps.max_label_efficiency.toFixed(1)}${TIMES} in label efficiency.` : ''));
+
+  let rows = `<table class="data"><thead><tr><th>Labels</th><th>C8-steerable</th>
+    <th>Dense CNN</th><th>Difference</th></tr></thead><tbody>`;
+  m.equivariant.fractions.forEach((f,i) => {
+    const j = m.baseline.fractions.indexOf(f);
+    const b = j >= 0 ? m.baseline.mean[j] : null;
+    rows += `<tr><td>${f*100}%</td>`
+      + `<td>${pct(m.equivariant.mean[i])} <span style="color:var(--ink-3)">${'\u00b1'} `
+      + `${(m.equivariant.std[i]*100).toFixed(1)}</span></td>`
+      + (b !== null
+        ? `<td>${pct(b)} <span style="color:var(--ink-3)">${'\u00b1'} `
+          + `${(m.baseline.std[j]*100).toFixed(1)}</span></td>`
+          + `<td><b>${((m.equivariant.mean[i]-b)*100 >= 0 ? '+' : '')}`
+          + `${((m.equivariant.mean[i]-b)*100).toFixed(1)} pp</b></td>`
+        : '<td>' + DASH + '</td><td>' + DASH + '</td>') + '</tr>';
+  });
+  set('curveTable', rows + '</tbody></table>');
+}
+
+/* =====================================================================
+   Rotation response
+   ===================================================================== */
+function setupRotation(demo, sheet){
+  if (!demo){ document.getElementById('invariance').style.display = 'none'; return; }
+  const cv = document.getElementById('rotCanvas'), ctx = cv.getContext('2d');
+  const names = demo.class_names, N = demo.n_angles, FS_ = demo.frame_size;
+  let gi = 0, ang = 0, playing = true;
+
+  const mkBars = host => {
+    host.innerHTML = '';
+    return names.map(n => {
+      const row = document.createElement('div');
+      row.className = 'bar';
+      row.innerHTML = `<span>${n}</span><span class="track"><span class="fill"></span></span>`
+        + `<span class="val">0.00</span>`;
+      host.appendChild(row);
+      return {fill: row.querySelector('.fill'), val: row.querySelector('.val')};
+    });
+  };
+  const eqB = mkBars(document.getElementById('eqBars'));
+  const blB = mkBars(document.getElementById('blBars'));
+
+  function paint(){
+    const g = demo.galaxies[gi];
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(sheet, ang*FS_, gi*FS_, FS_, FS_, 0, 0, cv.width, cv.height);
+    const pe = demo.equivariant[gi][ang], pb = demo.baseline[gi][ang];
+    for (let i = 0; i < names.length; i++){
+      eqB[i].fill.style.transform = 'scaleX(' + pe[i].toFixed(4) + ')';
+      eqB[i].fill.style.background = S1;
+      eqB[i].val.textContent = pe[i].toFixed(2);
+      blB[i].fill.style.transform = 'scaleX(' + pb[i].toFixed(4) + ')';
+      blB[i].fill.style.background = S2;
+      blB[i].val.textContent = pb[i].toFixed(2);
+    }
+    set('rotMeta', `Galaxy Zoo label <b style="color:var(--ink-2)">${g.class_name}</b><br>`
+      + `<span class="num">${(ang*360/N).toFixed(0)}${'\u00b0'} ${DOT} `
+      + `RA ${g.ra.toFixed(4)} ${DOT} Dec ${g.dec.toFixed(4)}</span>`);
+  }
+  let last = 0;
+  (function loop(t){
+    if (playing && t - last > 90){ ang = (ang+1) % N; last = t; paint(); }
+    requestAnimationFrame(loop);
+  })(0);
+
+  document.getElementById('rotPlay').onclick = e => {
+    playing = !playing; e.target.textContent = playing ? 'Pause' : 'Play';
+    e.target.setAttribute('aria-pressed', playing);
+  };
+  document.getElementById('rotPrev').onclick = () => {
+    gi = (gi - 1 + demo.galaxies.length) % demo.galaxies.length; paint(); };
+  document.getElementById('rotNext').onclick = () => {
+    gi = (gi + 1) % demo.galaxies.length; paint(); };
+
+  const st = demo.stability || {};
+  const eE = st.equivariant ? st.equivariant.tv_exact_grid_rotations : 0;
+  const bE = st.baseline ? st.baseline.tv_exact_grid_rotations : 0;
+  const eC = st.equivariant ? st.equivariant.tv_continuous_rotations : 0;
+  const bC = st.baseline ? st.baseline.tv_continuous_rotations : 0;
+  const f6 = v => v < 1e-4 ? v.toExponential(1) : v.toFixed(4);
+  set('eqSwing', f6(eE)); set('blSwing', f6(bE));
+  set('inv-body',
+    `Across ${demo.n_stability_sample} randomly drawn test galaxies, the quantity reported is
+     the total-variation distance between the predicted distribution at one orientation and
+     its own mean across orientations. On the four exact grid rotations, which are lossless
+     permutations of pixels on an odd frame, the steerable model moves <b>${f6(eE)}</b> and
+     the dense CNN moves <b>${f6(bE)}</b>. That comparison isolates the architecture, since
+     no resampling enters it.`);
+  set('inv-exact',
+    `At arbitrary angles the image must be resampled, and both models inherit the
+     interpolation error: the steerable model moves <b>${eC.toFixed(4)}</b> against
+     <b>${bC.toFixed(4)}</b>, a factor of
+     <b>${(bC/Math.max(eC,1e-9)).toFixed(1)}${TIMES}</b>. Evaluated across all thirty
+     checkpoints, the steerable model assigns every one of the 3,549 test galaxies the same
+     class at 0, 90, 180 and 270 degrees, giving an accuracy spread of exactly zero; the
+     dense CNN varies by <b>0.58</b> percentage points on average.`);
+}
+
+/* =====================================================================
+   Latent interpolation
+   ===================================================================== */
+function setupInterp(index, sheets){
+  if (!index){ document.getElementById('latent').style.display = 'none'; return; }
+  const sel = document.getElementById('pathSel');
+  index.paths.forEach((p, i) => {
+    const o = document.createElement('option'); o.value = i;
+    o.textContent = p.closed_loop
+      ? 'Closed tour ' + DOT + ' ' + p.anchor_classes.slice(0,-1).join(' ' + ARROW + ' ')
+      : p.anchor_classes[0] + ' ' + ARROW + ' ' + p.anchor_classes[1];
+    sel.appendChild(o);
+  });
+  const cv = document.getElementById('interpCanvas'), ctx = cv.getContext('2d');
+  const tc = document.getElementById('traceCanvas'), tctx = tc.getContext('2d');
+  let cur = 0, f = 0, last = 0;
+
+  function drawTrace(p){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    tc.width = tc.clientWidth * dpr; tc.height = tc.clientHeight * dpr;
+    tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = tc.clientWidth, H = tc.clientHeight, P = 28;
+    tctx.clearRect(0, 0, W, H);
+    const probs = p.class_probabilities; if (!probs) return;
+    const maxp = new Array(index.class_names.length).fill(0);
+    probs.forEach(r => r.forEach((v,i) => { if (v > maxp[i]) maxp[i] = v; }));
+    const top = maxp.map((v,i) => [v,i]).sort((a,b) => b[0]-a[0]).slice(0,3)
+      .filter(d => d[0] > 0.08).map(d => d[1]);
+    const cols = [S1, S2, S3];
+    tctx.strokeStyle = CSS('--rule'); tctx.lineWidth = 1;
+    [0, 0.5, 1].forEach(v => { const y = P + (1-v)*(H-2*P);
+      tctx.beginPath(); tctx.moveTo(P, y); tctx.lineTo(W-10, y); tctx.stroke(); });
+    top.forEach((ci, k) => {
+      tctx.beginPath(); tctx.strokeStyle = cols[k]; tctx.lineWidth = 2;
+      probs.forEach((row, i) => {
+        const x = P + i/(probs.length-1)*(W-P-10), y = P + (1-row[ci])*(H-2*P);
+        i ? tctx.lineTo(x,y) : tctx.moveTo(x,y);
+      });
+      tctx.stroke();
+    });
+    const x = P + f/(probs.length-1)*(W-P-10);
+    tctx.strokeStyle = 'rgba(255,255,255,.42)'; tctx.lineWidth = 1;
+    tctx.beginPath(); tctx.moveTo(x, P-9); tctx.lineTo(x, H-P+9); tctx.stroke();
+    tctx.fillStyle = CSS('--ink-3'); tctx.font = '10px ' + CSS('--mono');
+    tctx.fillText('1.0', 5, P+4); tctx.fillText('0.0', 5, H-P+4);
+    set('traceLegend', top.map((ci,k) =>
+      `<div class="item"><span class="sw" style="background:${cols[k]}"></span>`
+      + `${index.class_names[ci]}</div>`).join(''));
+  }
+  function paint(){
+    const p = index.paths[cur], sh = sheets[p.name]; if (!sh) return;
+    const S = p.frame_size, r = Math.floor(f/p.cols), c = f % p.cols;
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(sh, c*S, r*S, S, S, 0, 0, cv.width, cv.height);
+    drawTrace(p);
+  }
+  (function loop(t){
+    if (t - last > 70){ f = (f+1) % index.paths[cur].n_frames; last = t; paint(); }
+    requestAnimationFrame(loop);
+  })(0);
+  sel.onchange = () => { cur = +sel.value; f = 0; paint(); };
+  paint();
+}
+
+/* =====================================================================
+   Anomaly gallery
+   ===================================================================== */
+function setupGallery(anom, atlas, images){
+  if (!anom){ document.getElementById('anomaly').style.display = 'none'; return; }
+  const host = document.getElementById('gallery');
+  const T = atlas.tile, cols = atlas.cols, per = atlas.per_page;
+  anom.entries.forEach(e => {
+    const a = document.createElement('a');
+    a.href = e.viewer_url; a.target = '_blank'; a.rel = 'noopener';
+    a.title = `DESI Legacy Survey imaging at RA ${e.ra.toFixed(4)}, Dec ${e.dec.toFixed(4)}`;
+    const cv = document.createElement('canvas');
+    cv.width = T*2; cv.height = T*2;
+    const g = cv.getContext('2d');
+    const page = Math.floor(e.index/per), k = e.index % per, im = images[page];
+    if (im){ g.imageSmoothingQuality = 'high';
+      g.drawImage(im, (k%cols)*T, Math.floor(k/cols)*T, T, T, 0, 0, cv.width, cv.height); }
+    a.appendChild(cv);
+    const m = document.createElement('div'); m.className = 'm';
+    m.innerHTML = `<div class="r">${e.rank}</div><div class="c">${e.class_name}</div>`;
+    a.appendChild(m); host.appendChild(a);
+  });
+  const sorted = anom.composition.slice().sort((a,b) => b.enrichment - a.enrichment);
+  const up = sorted[0], down = sorted[sorted.length-1];
+  set('an-body',
+    `Ranked against the parent catalogue, the hundred highest scoring objects are enriched in
+     <b>${up.class_name}</b> by <b>${up.enrichment.toFixed(2)}${TIMES}</b> and depleted in
+     <b>${down.class_name}</b> to <b>${down.enrichment.toFixed(2)}${TIMES}</b>. Smooth round
+     galaxies are the most reconstructible and the most densely packed morphology in the
+     embedding, and they fall to the bottom of the ranking. Cigar Shaped Smooth, the rarest
+     class in the catalogue at 334 members, is also depleted, which distinguishes the
+     ranking from one that recovers rare classes.`);
+}
+
+/* =====================================================================
+   Contents, masthead, scroll reveal
+   ===================================================================== */
+function chrome(){
+  const secs = [...document.querySelectorAll('section.paper')].filter(s => s.id !== 'abstract');
+  const list = document.getElementById('tocList');
+  secs.forEach(s => {
+    const h = s.querySelector('h2'); if (!h) return;
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="#${s.id}">${h.textContent}</a>`;
+    list.appendChild(li);
+  });
+  const links = [...list.querySelectorAll('a')];
+  const mast = document.getElementById('masthead');
+  const toc = document.getElementById('toc');
+  const hero = document.getElementById('hero');
+
+  new IntersectionObserver(es => {
+    es.forEach(e => {
+      mast.classList.toggle('on', !e.isIntersecting);
+      toc.classList.toggle('on', !e.isIntersecting);
+    });
+  }, {threshold:0.06}).observe(hero);
+
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const i = secs.indexOf(e.target);
+      links.forEach((a,k) => a.classList.toggle('here', k === i));
+      const h = e.target.querySelector('h2');
+      if (h) document.getElementById('mastRight').textContent = h.textContent;
+    });
+  }, {rootMargin:'-18% 0px -72% 0px'});
+  secs.forEach(s => io.observe(s));
+
+  const ro = new IntersectionObserver(es => {
+    es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); ro.unobserve(e.target); } });
+  }, {rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(e => ro.observe(e));
+}
+
+/* =====================================================================
+   Boot
+   ===================================================================== */
+(async function main(){
+  try {
+    POINTS = await asset('points.json');
+    METRICS = await asset('metrics.json');
+    ATLAS = await asset('atlas.json');
+  } catch (err) {
+    document.querySelector('main').insertAdjacentHTML('afterbegin',
+      `<div class="shell"><div class="aside">Result files were not found. Run
+       <code>python scripts/export_web.py</code>, then serve this directory over HTTP.
+       <br><span class="num">${err.message}</span></div></div>`);
+    return;
+  }
+  try { ANOM = await asset('anomalies.json'); } catch (e) { ANOM = null; }
+
+  const ds = METRICS.dataset || {}, aud = METRICS.equivariance_audit || {};
+  const sweep = METRICS.sweep, ssl = METRICS.ssl, tta = METRICS.tta;
+  const cost = aud.cost || {}, inv = aud.network_invariance_untrained || {};
+  const lay = aud.layer_equivariance || {};
+  const acc = sweep && sweep.metrics ? sweep.metrics.test_accuracy : null;
+  const cf = acc ? acc.equivariant_crossing_fraction : null;
+
+  set('dateline', `${(ds.n_total || 17736).toLocaleString()} galaxies ${DOT} `
+    + `Galaxy10 DECaLS ${DOT} DESI Legacy Imaging Surveys`);
+
+  if (acc){
+    const eqFull = acc.equivariant.mean[acc.equivariant.mean.length-1];
+    set('ab-cross', (cf*100).toFixed(0));
+    set('ab-gap', ((eqFull - acc.baseline_full_label_mean)*100).toFixed(1));
+    set('eff-summary',
+      `Across three seeds the steerable network reaches
+       <b>${pct(eqFull)}</b> at full supervision against <b>${pct(acc.baseline_full_label_mean)}</b>
+       for the dense CNN, and matches the dense CNN's all-label accuracy at
+       <b>${(cf*100).toFixed(0)} percent</b> of the labels, a label-efficiency factor of
+       <b>${(1/cf).toFixed(1)}${TIMES}</b>.`);
+    const paired = sweep.paired_comparison ? sweep.paired_comparison.test_accuracy : null;
+    if (paired) set('eff-paired',
+      `A claim independent of that interpolation: holding seed and label fraction fixed and
+       comparing matched pairs, the steerable model wins
+       <b>${paired.equivariant_wins} of ${paired.n_pairs}</b> comparisons on accuracy, and the
+       same on macro-F1, giving an exact two-sided sign test probability of
+       <b>${paired.sign_test_two_sided_p.toExponential(1)}</b>. Every architecture comparison
+       in the study, at every label budget and every seed, resolved in the same direction.`);
+    const e50 = acc.equivariant.mean[3], e100 = acc.equivariant.mean[4];
+    const b50 = acc.baseline.mean[3], b100 = acc.baseline.mean[4];
+    set('eff-plateau',
+      `Both curves flatten between 50 and 100 percent of labels, by
+       ${((e100-e50)*100).toFixed(2)} and ${((b100-b50)*100).toFixed(2)} percentage points
+       respectively. The all-label target therefore sits on a plateau, which is the condition
+       under which the crossing fraction is meaningful: a baseline still improving at the end
+       of training would understate the labels it requires.`);
+  }
+  set('ab-par', cost.param_ratio_baseline_over_equivariant
+    ? cost.param_ratio_baseline_over_equivariant.toFixed(1) : '11.8');
+  set('m-macs', cost.conv_macs_per_image ? (cost.conv_macs_per_image/1e6).toFixed(1) : '75.4');
+  set('m-parb', cost.params_baseline ? cost.params_baseline.toLocaleString() : '');
+  set('m-pare', cost.params_equivariant ? cost.params_equivariant.toLocaleString() : '');
+  set('m-ratio', cost.param_ratio_baseline_over_equivariant
+    ? cost.param_ratio_baseline_over_equivariant.toFixed(1) : '');
+  if (inv.equivariant_max_rel_l2)
+    set('m-inv', inv.equivariant_max_rel_l2.toExponential(1).replace('e-', ' ' + TIMES + ' 10<sup>-') + '</sup>');
+  if (lay.max_rel_error_exact_rotations)
+    set('m-lay', lay.max_rel_error_exact_rotations.toExponential(1).replace('e-', ' ' + TIMES + ' 10<sup>-') + '</sup>');
+
+  if (ssl){
+    set('ab-knn', (ssl.knn_probe.accuracy*100).toFixed(1));
+    set('atlas-body',
+      `A k-nearest-neighbour classifier fitted on the training embeddings scores
+       <b>${pct(ssl.knn_probe.accuracy)}</b> on the held-out test split, against
+       ${acc ? pct(acc.equivariant.mean[acc.equivariant.mean.length-1]) : ''} for the
+       fully supervised model, placing the label-free representation close to what
+       supervision delivers from 5 percent of the labels. Clustering the embedding into ten
+       groups recovers Galaxy Zoo classes at <b>${pct(ssl.clustering.purity)}</b> purity
+       against a majority-class floor of 14.9 percent. The two purest clusters are the
+       edge-on classes, the morphologies least ambiguous to a human classifier.`);
+    set('sslTable',
+      `<table class="data"><thead><tr><th>Measurement</th><th>Value</th></tr></thead><tbody>
+       <tr><td>k-NN probe accuracy, k = ${ssl.knn_probe.k}, held-out test</td>
+         <td><b>${pct(ssl.knn_probe.accuracy)}</b></td></tr>
+       <tr><td>k-NN probe macro-F1</td><td>${ssl.knn_probe.macro_f1.toFixed(4)}</td></tr>
+       <tr><td>k-means cluster purity, k = 10</td><td>${pct(ssl.clustering.purity)}</td></tr>
+       <tr><td>Adjusted mutual information</td>
+         <td>${ssl.clustering.adjusted_mutual_info.toFixed(4)}</td></tr>
+       <tr><td>Adjusted Rand index</td>
+         <td>${ssl.clustering.adjusted_rand.toFixed(4)}</td></tr>
+       <tr><td>UMAP trustworthiness, k = 15</td>
+         <td>${(ssl.umap_trustworthiness_n15_subset3000||0).toFixed(4)}</td></tr>
+       </tbody></table>`);
+  }
+
+  if (tta && tta.summary){
+    const c = (a,m) => { const s = tta.summary[a + '_1']; return s ? s.mean[m].toFixed(4) : DASH; };
+    set('ttaTable',
+      `<table class="data"><thead><tr><th>Test accuracy, all labels</th>
+       <th>Single pass</th><th>4 rotations</th><th>8 element orbit</th></tr></thead><tbody>
+       <tr><td>Dense CNN</td><td>${c('baseline','plain')}</td>
+         <td>${c('baseline','c4_tta')}</td><td>${c('baseline','d4_tta')}</td></tr>
+       <tr><td>C8-steerable</td><td>${c('equivariant','plain')}</td>
+         <td><b>${c('equivariant','c4_tta')}</b></td>
+         <td>${c('equivariant','d4_tta')}</td></tr>
+       </tbody></table>`);
+    const v = tta.verdict;
+    set('ab-tta', Math.abs(v.tta_gain_baseline_100pct_pp).toFixed(2));
+    set('tta-body',
+      `Orbit averaging returns <b>${v.tta_gain_baseline_100pct_pp.toFixed(2)} percentage
+       points</b> to the dense CNN for eight times the inference cost. The separation between
+       architectures measures ${v.architecture_gap_plain_pp.toFixed(2)} points with single
+       passes and ${v.architecture_gap_both_tta_pp.toFixed(2)} points with both models
+       averaged. Inference-time averaging removes the variation across orientations and
+       leaves the difference in representation quality that training under the constraint
+       produces.`);
+    set('tta-eff',
+      `Label efficiency holds under each framing: <b>${v.label_efficiency_vs_plain.toFixed(1)}${TIMES}</b>
+       against the single-pass dense CNN, <b>${v.label_efficiency_vs_d4_tta.toFixed(1)}${TIMES}</b>
+       against the orbit-averaged dense CNN paying eight times the inference cost, and
+       <b>${v.label_efficiency_matched_8x_cost.toFixed(1)}${TIMES}</b> with both architectures
+       given the same eight-pass budget. Averaging the steerable model over the four rotations
+       reproduces its single-pass accuracy to every printed digit at all five label fractions,
+       which confirms the invariance result through an independent path.`);
+  }
+
+  if (METRICS.anomaly_rank_correlation != null)
+    set('an-corr', METRICS.anomaly_rank_correlation.toFixed(3));
+
+  const csel = document.getElementById('classSel');
+  POINTS.class_names.forEach((n,i) => {
+    const o = document.createElement('option'); o.value = i;
+    o.textContent = n + ' (' + POINTS.label.filter(l => l === i).length.toLocaleString() + ')';
+    csel.appendChild(o);
+  });
+
+  buildCurve(sweep);
+
+  const heroView = new AtlasView(document.getElementById('atlasHero'), {tilePx:9});
+  const mainView = new AtlasView(document.getElementById('atlasMain'), {tilePx:13});
+  await heroView.init(POINTS, ATLAS);
+  await mainView.init(POINTS, ATLAS);
+  const rawImages = [];
+  for (const f of ATLAS.files) rawImages.push(await atlasImage(f.file));
+
+  let drift = 0;
+  (function frame(){
+    drift += 0.00032;
+    heroView.center = [Math.sin(drift)*0.30, Math.cos(drift*0.78)*0.20];
+    heroView.scale = Math.min(heroView.canvas.width, heroView.canvas.height)
+      * (0.62 + 0.10*Math.sin(drift*0.55));
+    heroView.draw(); mainView.draw();
+    requestAnimationFrame(frame);
+  })();
+  addEventListener('resize', () => { heroView.resize(); mainView.resize(); });
+  heroView.resize(); mainView.resize();
+  window.__views = {heroView, mainView};
+
+  const cvs = document.getElementById('atlasMain');
+  const insp = document.getElementById('inspect');
+  let dragging = false, lastPt = null;
+  cvs.addEventListener('pointerdown', e => {
+    dragging = true; lastPt = [e.clientX, e.clientY];
+    cvs.classList.add('drag'); cvs.setPointerCapture(e.pointerId);
+  });
+  cvs.addEventListener('pointerup', e => {
+    dragging = false; cvs.classList.remove('drag');
+    try { cvs.releasePointerCapture(e.pointerId); } catch (_) {}
+  });
+  cvs.addEventListener('pointermove', e => {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    if (dragging && lastPt){
+      mainView.center[0] -= (e.clientX - lastPt[0])*dpr/mainView.scale;
+      mainView.center[1] += (e.clientY - lastPt[1])*dpr/mainView.scale;
+      lastPt = [e.clientX, e.clientY]; insp.style.opacity = 0; return;
+    }
+    const r = cvs.getBoundingClientRect();
+    const [wx, wy] = mainView.screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    let best = -1, bd = 1e9;
+    const X = POINTS.x, Y = POINTS.y;
+    for (let i = 0; i < POINTS.n; i++){
+      const d = (X[i]-wx)*(X[i]-wx) + (Y[i]-wy)*(Y[i]-wy);
+      if (d < bd){ bd = d; best = i; }
+    }
+    if (best >= 0 && bd < Math.pow(18/mainView.scale, 2)){
+      insp.style.opacity = 1;
+      insp.style.left = Math.min(e.clientX - r.left + 17, r.width - 222) + 'px';
+      insp.style.top = Math.min(e.clientY - r.top + 17, r.height - 142) + 'px';
+      const z = POINTS.redshift[best];
+      insp.innerHTML = `<div class="cls">${POINTS.class_names[POINTS.label[best]]}</div>`
+        + `<div class="row"><span>anomaly</span><b>${(POINTS.anomaly[best]*100).toFixed(0)} pct</b></div>`
+        + `<div class="row"><span>redshift</span><b>${z < 0 ? 'not measured' : z.toFixed(4)}</b></div>`
+        + `<div class="row"><span>RA</span><b>${POINTS.ra[best].toFixed(4)}</b></div>`
+        + `<div class="row"><span>Dec</span><b>${POINTS.dec[best].toFixed(4)}</b></div>`
+        + `<div class="row"><span>split</span><b>${['train','validation','test'][POINTS.split[best]]}</b></div>`;
+    } else insp.style.opacity = 0;
+  });
+  cvs.addEventListener('pointerleave', () => { insp.style.opacity = 0; });
+  cvs.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = cvs.getBoundingClientRect();
+    const before = mainView.screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    mainView.scale = Math.max(60, Math.min(mainView.scale * Math.exp(-e.deltaY*0.0016), 90000));
+    const after = mainView.screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    mainView.center[0] += before[0] - after[0];
+    mainView.center[1] += before[1] - after[1];
+  }, {passive:false});
+
+  document.querySelectorAll('#modeSeg button').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('#modeSeg button')
+        .forEach(x => x.setAttribute('aria-pressed', x === b));
+      mainView.mode = {none:0, anomaly:1, redshift:2}[b.dataset.mode];
+    };
+  });
+  csel.onchange = () => { mainView.hl = +csel.value; };
+  document.getElementById('resetView').onclick = () => { mainView.fit(); };
+
+  try {
+    const demo = await asset('rotation_demo/rotation_demo.json');
+    setupRotation(demo, await atlasImage('rotation_demo/rotation_frames.jpg'));
+  } catch (e) { setupRotation(null); }
+
+  try {
+    const idx = await asset('interp/index.json');
+    const sheets = {};
+    for (const p of idx.paths) sheets[p.name] = await atlasImage('interp/' + p.name + '.png');
+    setupInterp(idx, sheets);
+  } catch (e) { setupInterp(null); }
+
+  setupGallery(ANOM, ATLAS, rawImages);
+  chrome();
+
+  set('buildStamp', `${(ds.n_total||0).toLocaleString()} galaxies ${DOT} `
+    + `${ds.network_input_size||''} px input ${DOT} `
+    + `source sha256 ${(ds.sha256||'').slice(0,16)}${ELL}`);
+})();
+</script>
+</body>
+</html>

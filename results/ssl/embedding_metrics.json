@@ -1,0 +1,78 @@
+{
+  "checkpoint_step": 5000,
+  "representation_dim": 64,
+  "knn_probe": {
+    "k": 20,
+    "accuracy": 0.6714567483798253,
+    "macro_f1": 0.6403792700365192
+  },
+  "clustering": {
+    "k": 10,
+    "purity": 0.41069012178619757,
+    "adjusted_mutual_info": 0.2730661995872493,
+    "adjusted_rand": 0.1747688661916294,
+    "clusters": [
+      {
+        "cluster": 0,
+        "size": 1984,
+        "majority_class": "Round Smooth",
+        "purity": 0.3497983870967742
+      },
+      {
+        "cluster": 1,
+        "size": 1828,
+        "majority_class": "Unbarred Loose Spiral",
+        "purity": 0.4048140043763676
+      },
+      {
+        "cluster": 2,
+        "size": 1905,
+        "majority_class": "Unbarred Tight Spiral",
+        "purity": 0.3543307086614173
+      },
+      {
+        "cluster": 3,
+        "size": 1884,
+        "majority_class": "In-between Round Smooth",
+        "purity": 0.33067940552016983
+      },
+      {
+        "cluster": 4,
+        "size": 1206,
+        "majority_class": "Edge-on without Bulge",
+        "purity": 0.4013266998341625
+      },
+      {
+        "cluster": 5,
+        "size": 981,
+        "majority_class": "Edge-on without Bulge",
+        "purity": 0.6411824668705403
+      },
+      {
+        "cluster": 6,
+        "size": 1588,
+        "majority_class": "Barred Spiral",
+        "purity": 0.22795969773299748
+      },
+      {
+        "cluster": 7,
+        "size": 2101,
+        "majority_class": "Edge-on with Bulge",
+        "purity": 0.6630176106615897
+      },
+      {
+        "cluster": 8,
+        "size": 2120,
+        "majority_class": "Barred Spiral",
+        "purity": 0.33773584905660375
+      },
+      {
+        "cluster": 9,
+        "size": 2139,
+        "majority_class": "Round Smooth",
+        "purity": 0.4525479195885928
+      }
+    ]
+  },
+  "umap_trustworthiness_n15_subset3000": 0.9217557720300078
+}

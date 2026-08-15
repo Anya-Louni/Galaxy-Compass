@@ -1,0 +1,36 @@
+{
+ "tile": 48,
+ "cols": 85,
+ "per_page": 7225,
+ "pages": 3,
+ "n": 17736,
+ "files": [
+  {
+   "page": 0,
+   "file": "atlas_0.jpg",
+   "count": 7225,
+   "rows": 85,
+   "width": 4080,
+   "height": 4080,
+   "mb": 3.38
+  },
+  {
+   "page": 1,
+   "file": "atlas_1.jpg",
+   "count": 7225,
+   "rows": 85,
+   "width": 4080,
+   "height": 4080,
+   "mb": 3.51
+  },
+  {
+   "page": 2,
+   "file": "atlas_2.jpg",
+   "count": 3286,
+   "rows": 39,
+   "width": 4080,
+   "height": 1872,
+   "mb": 1.63
+  }
+ ]
+}

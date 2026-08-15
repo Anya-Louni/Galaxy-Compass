@@ -1,0 +1,50 @@
+{
+  "layer_equivariance": {
+    "max_rel_error_exact_rotations": 5.480449421514587e-07,
+    "max_rel_error_45deg_rotations": 0.6255064363425591,
+    "per_element": {
+      "0": 0.0,
+      "1": 0.6255064363425591,
+      "2": 4.11033706613594e-07,
+      "3": 0.6255064363425591,
+      "4": 5.480449421514587e-07,
+      "5": 0.6255064363425591,
+      "6": 4.795393243825264e-07,
+      "7": 0.6255064363425591
+    }
+  },
+  "network_invariance_untrained": {
+    "input_size": 65,
+    "equivariant_max_rel_l2": 9.376382337222822e-08,
+    "baseline_max_rel_l2": 0.025608837604522705,
+    "ratio": 273120.6629966388
+  },
+  "cost": {
+    "widths": [
+      32,
+      64,
+      128,
+      256
+    ],
+    "kernels": [
+      5,
+      3,
+      3,
+      3
+    ],
+    "conv_macs_per_image": 75407712,
+    "params_equivariant": 33286,
+    "params_baseline": 393514,
+    "param_ratio_baseline_over_equivariant": 11.822207534699272
+  },
+  "throughput": {
+    "equivariant": {
+      "sec_per_step_bs64": 0.2942105333325647,
+      "images_per_sec": 217.53130071538524
+    },
+    "baseline": {
+      "sec_per_step_bs64": 0.27521853333261487,
+      "images_per_sec": 232.54247897125776
+    }
+  }
+}

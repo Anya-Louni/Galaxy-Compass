@@ -1,0 +1,222 @@
+{
+  "n_runs": 30,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "metrics": {
+    "test_accuracy": {
+      "equivariant": {
+        "fractions": [
+          0.05,
+          0.1,
+          0.2,
+          0.5,
+          1.0
+        ],
+        "mean": [
+          0.6929651545036161,
+          0.7610594533671456,
+          0.7893303277918663,
+          0.811590119282427,
+          0.8217338217338218
+        ],
+        "std": [
+          0.01503269617576285,
+          0.015076643811407995,
+          0.01024236376835959,
+          0.0037838333950378175,
+          0.004717711413496498
+        ],
+        "n_seeds": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "baseline": {
+        "fractions": [
+          0.05,
+          0.1,
+          0.2,
+          0.5,
+          1.0
+        ],
+        "mean": [
+          0.6366112519958674,
+          0.721799567953414,
+          0.7559876021414483,
+          0.7729876960646193,
+          0.774490466798159
+        ],
+        "std": [
+          0.03633115305354215,
+          0.021305452245714764,
+          0.007244271700300043,
+          0.0061237619283189704,
+          0.003988141964039086
+        ],
+        "n_seeds": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "baseline_full_label_mean": 0.774490466798159,
+      "baseline_full_label_std": 0.003988141964039086,
+      "equivariant_crossing_fraction": 0.138999824024333,
+      "crossing_method": "interpolated",
+      "label_efficiency_factor": 7.194253712328026,
+      "per_seed_crossing": {
+        "runs": [
+          {
+            "seed": 0,
+            "crossing_fraction": 0.16497211886706026,
+            "label_efficiency": 6.061630334067732
+          },
+          {
+            "seed": 1,
+            "crossing_fraction": 0.16724180090056764,
+            "label_efficiency": 5.979366370220699
+          },
+          {
+            "seed": 2,
+            "crossing_fraction": 0.0963364619845903,
+            "label_efficiency": 10.38028571321165
+          }
+        ],
+        "mean_crossing_fraction": 0.1428501272507394,
+        "min": 0.0963364619845903,
+        "max": 0.16724180090056764,
+        "mean_label_efficiency": 7.47376080583336,
+        "min_label_efficiency": 5.979366370220699,
+        "max_label_efficiency": 10.38028571321165
+      }
+    },
+    "test_macro_f1": {
+      "equivariant": {
+        "fractions": [
+          0.05,
+          0.1,
+          0.2,
+          0.5,
+          1.0
+        ],
+        "mean": [
+          0.6554905116850577,
+          0.7244511385241404,
+          0.7527179655510801,
+          0.783416587695112,
+          0.7902306121023038
+        ],
+        "std": [
+          0.016012112316155534,
+          0.019704275378154085,
+          0.009460447747313708,
+          0.005794486660476841,
+          0.005917319079160079
+        ],
+        "n_seeds": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "baseline": {
+        "fractions": [
+          0.05,
+          0.1,
+          0.2,
+          0.5,
+          1.0
+        ],
+        "mean": [
+          0.5990277667048566,
+          0.6801233262668752,
+          0.7255285329909075,
+          0.7427917139171853,
+          0.7425410685880077
+        ],
+        "std": [
+          0.03210890154683952,
+          0.025878919957110825,
+          0.0059280119062376,
+          0.00548640190728195,
+          0.0034348280595961444
+        ],
+        "n_seeds": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "baseline_full_label_mean": 0.7425410685880077,
+      "baseline_full_label_std": 0.0034348280595961444,
+      "equivariant_crossing_fraction": 0.15582970902872675,
+      "crossing_method": "interpolated",
+      "label_efficiency_factor": 6.417261549372802,
+      "per_seed_crossing": {
+        "runs": [
+          {
+            "seed": 0,
+            "crossing_fraction": 0.1686735505261241,
+            "label_efficiency": 5.928611788160114
+          },
+          {
+            "seed": 1,
+            "crossing_fraction": 0.1963263772716795,
+            "label_efficiency": 5.093559071872367
+          },
+          {
+            "seed": 2,
+            "crossing_fraction": 0.09714045763255058,
+            "label_efficiency": 10.294371926707006
+          }
+        ],
+        "mean_crossing_fraction": 0.1540467951434514,
+        "min": 0.09714045763255058,
+        "max": 0.1963263772716795,
+        "mean_label_efficiency": 7.105514262246497,
+        "min_label_efficiency": 5.093559071872367,
+        "max_label_efficiency": 10.294371926707006
+      }
+    }
+  },
+  "paired_comparison": {
+    "test_accuracy": {
+      "equivariant_wins": 15,
+      "baseline_wins": 0,
+      "n_pairs": 15,
+      "sign_test_two_sided_p": 6.103515625e-05
+    },
+    "test_macro_f1": {
+      "equivariant_wins": 15,
+      "baseline_wins": 0,
+      "n_pairs": 15,
+      "sign_test_two_sided_p": 6.103515625e-05
+    }
+  },
+  "rotation_at_45deg_confounded": {
+    "equivariant": {
+      "mean_accuracy_change_at_45deg": -0.003381234150464903,
+      "std": 0.0068184229905530825,
+      "n_runs": 15,
+      "caveat": "confounded by bilinear resampling; see rotation_robustness.json"
+    },
+    "baseline": {
+      "mean_accuracy_change_at_45deg": -0.01397576782192167,
+      "std": 0.01060335135759642,
+      "n_runs": 15,
+      "caveat": "confounded by bilinear resampling; see rotation_robustness.json"
+    }
+  }
+}

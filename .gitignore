@@ -1,0 +1,25 @@
+# Source dataset (2.5 GB) and derived tensors: rebuilt by `python -m src.data`
+data/
+
+# Model checkpoints are large; the JSON records beside them are what the
+# figures and the site are built from, so those are kept.
+results/sweep/*.pt
+results/ssl/*.pt
+results/ssl/embeddings.npy
+results/vae/*.pt
+results/vae/latents.npy
+results/vae/recon_error.npy
+results/anomaly/*.npy
+
+# Web assets are committed so the site renders straight from GitHub Pages
+# without a build step. Regenerate them with scripts/export_web.py.
+
+# Single-file build and its intermediate asset directory.
+web/_artifact_assets/
+web/artifact.html
+web/artifact_fragment.html
+
+logs/
+__pycache__/
+*.pyc
+.venv/

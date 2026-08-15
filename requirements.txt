@@ -1,0 +1,19 @@
+# Core numerics and deep learning.
+# Pinned to lower bounds that were actually exercised; the project was
+# developed and run end to end on CPU only (Python 3.13, torch 2.11).
+numpy>=1.26
+scipy>=1.11
+torch>=2.4
+torchvision>=0.19
+
+# E(2)-steerable convolutions. e2cnn is used rather than its successor escnn
+# because it installs cleanly on Python 3.13 with no Fortran toolchain, and
+# the C_N / D_N steerable layers this project needs are identical in both.
+e2cnn>=0.2.3
+
+# Data, evaluation, projection, figures.
+h5py>=3.10
+scikit-learn>=1.4
+umap-learn>=0.5.5
+matplotlib>=3.8
+pillow>=10.0
